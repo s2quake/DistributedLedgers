@@ -2,6 +2,8 @@
 using JSSoft.Library.Terminals;
 using DistributedLedgers.ConsoleHost;
 
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("JSSoft.Communication.Runtime")]
+
 try
 {
     var options = ApplicationOptions.Parse(args);
