@@ -1,6 +1,7 @@
 using System.ComponentModel.Composition;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Library.Commands;
+using JSSoft.Library.Terminals;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
 
@@ -28,20 +29,40 @@ sealed partial class Algorithm_2_9Command : CommandAsyncBase
         var serverPorts = PortUtility.GetPorts(2);
         var clientService1 = new ClientMessageService("client1");
         var clientService2 = new ClientMessageService("client2");
+        var serverService1 = new ServerMessageService("server1");
+        var serverService2 = new ServerMessageService("server2");
         Out.WriteLine("Nodes initializing.");
-        await using var server1 = await SimpleServer.CreateAsync(serverPorts[0], new ServerMessageService("server1"));
-        await using var server2 = await SimpleServer.CreateAsync(serverPorts[1], new ServerMessageService("server2"));
+        await using var server1 = await SimpleServer.CreateAsync(serverPorts[0], serverService1);
+        await using var server2 = await SimpleServer.CreateAsync(serverPorts[1], serverService2);
         await using var serializer = await Serializer.CreateAsync(serializerPort, serverPorts);
         await using var client1 = await SimpleClient.CreateAsync(serializerPort, clientService1);
         await using var client2 = await SimpleClient.CreateAsync(serializerPort, clientService2);
         Out.WriteLine("Nodes initialized.");
 
-        var taskList = new List<Task>(Sentences.Length * 2);
-        foreach (var item in Sentences)
+        await Parallel.ForAsync(0, Sentences.Length, async (i, cancellationToken) =>
         {
-            taskList.Add(clientService1.SendMessageAsync(item, cancellationToken));
-            taskList.Add(clientService2.SendMessageAsync(item, cancellationToken));
+            await clientService1.SendMessageAsync(i, Sentences[i], cancellationToken);
+            await clientService2.SendMessageAsync(i, Sentences[i], cancellationToken);
+        });
+
+        var tsb = new TerminalStringBuilder();
+        var messages1 = serverService1.Messages;
+        var messages2 = serverService2.Messages;
+        tsb.IsBold = true;
+        tsb.AppendLine(serverService1.Name);
+        tsb.IsBold = false;
+        for (var i = 0; i < messages1.Length; i++)
+        {
+            tsb.AppendLine($"    {messages1[i]}");
         }
-        await Task.WhenAll(taskList);
+        tsb.AppendLine();
+        tsb.IsBold = true;
+        tsb.AppendLine(serverService2.Name);
+        tsb.IsBold = false;
+        for (var i = 0; i < messages2.Length; i++)
+        {
+            tsb.AppendLine($"    {messages2[i]}");
+        }
+        await Out.WriteAsync(tsb.ToString());
     }
 }

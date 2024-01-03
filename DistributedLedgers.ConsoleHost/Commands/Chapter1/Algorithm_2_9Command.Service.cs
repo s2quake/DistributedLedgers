@@ -7,17 +7,24 @@ partial class Algorithm_2_9Command
     public interface IMessageService
     {
         [OperationContract]
-        Task SendMessageAsync(string message, CancellationToken cancellationToken);
+        Task SendMessageAsync(int index, string message, CancellationToken cancellationToken);
     }
 
     sealed class ServerMessageService(string name) : ServerServiceHostBase<IMessageService>, IMessageService
     {
         private readonly string _name = name;
+        private readonly Dictionary<int, string> _messageByIndex = [];
 
-        public async Task SendMessageAsync(string message, CancellationToken cancellationToken)
+        public string[] Messages
+        {
+            get => _messageByIndex.OrderBy(item => item.Key).Select(item => item.Value).ToArray();
+        }
+
+        public async Task SendMessageAsync(int index, string message, CancellationToken cancellationToken)
         {
             await Task.Delay(Random.Shared.Next(100, 2000), cancellationToken);
-            await Console.Out.WriteLineAsync($"{_name}: {message}");
+            // await Console.Out.WriteLineAsync($"{_name}: {message}");
+            _messageByIndex[index] = message;
         }
     }
 
@@ -25,10 +32,10 @@ partial class Algorithm_2_9Command
     {
         private readonly string _name = name;
 
-        public async Task SendMessageAsync(string message, CancellationToken cancellationToken)
+        public async Task SendMessageAsync(int index, string message, CancellationToken cancellationToken)
         {
-            await Service.SendMessageAsync(message, cancellationToken);
-            await Console.Out.WriteLineAsync($"{_name}: {message}");
+            await Service.SendMessageAsync(index, message, cancellationToken);
+            // await Console.Out.WriteLineAsync($"{_name}: {message}");
         }
     }
 }

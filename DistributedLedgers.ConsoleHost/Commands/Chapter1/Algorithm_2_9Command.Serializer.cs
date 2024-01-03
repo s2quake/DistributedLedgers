@@ -41,9 +41,9 @@ partial class Algorithm_2_9Command
 
     sealed class SerializerSendService : ClientServiceHostBase<IMessageService>, IMessageService
     {
-        public async Task SendMessageAsync(string message, CancellationToken cancellationToken)
+        public async Task SendMessageAsync(int index, string message, CancellationToken cancellationToken)
         {
-            await Service.SendMessageAsync(message, cancellationToken);
+            await Service.SendMessageAsync(index, message, cancellationToken);
         }
     }
 
@@ -51,9 +51,9 @@ partial class Algorithm_2_9Command
     {
         private readonly IMessageService[] _dataServices = dataServices;
 
-        public async Task SendMessageAsync(string message, CancellationToken cancellationToken)
+        public async Task SendMessageAsync(int index, string message, CancellationToken cancellationToken)
         {
-            var tasks = _dataServices.Select(item => item.SendMessageAsync(message, cancellationToken));
+            var tasks = _dataServices.Select(item => item.SendMessageAsync(index, message, cancellationToken));
             await Task.WhenAll(tasks);
         }
     }
