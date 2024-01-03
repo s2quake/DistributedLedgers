@@ -1,7 +1,6 @@
 
 using System.ComponentModel.Composition;
 using DistributedLedgers.ConsoleHost.Common;
-using Grpc.Core.Utils;
 using JSSoft.Communication;
 using JSSoft.Library.Commands;
 

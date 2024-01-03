@@ -3,7 +3,6 @@ using System.ComponentModel.Composition;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
 using JSSoft.Library.Commands;
-using JSSoft.Library.Extensions;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
 
@@ -41,7 +40,7 @@ sealed class Algorithm_2_3Command : CommandAsyncBase
         }
     }
 
-    sealed class ClientDataService : ClientServiceHostBase<IDataService>
+    sealed class ClientDataService : ClientServiceHostBase<IDataService>, IDataService
     {
         public void SendMessage(string message)
         {

@@ -11,15 +11,17 @@ sealed class SimpleServer : ServerContextBase, IAsyncDisposable
     {
     }
 
-    public static async Task<SimpleServer> CreateAsync(params IServiceHost[] serviceHosts)
+    public static Task<SimpleServer> CreateAsync(params IServiceHost[] serviceHosts) => CreateAsync(DefaultPort, serviceHosts);
+
+    public static async Task<SimpleServer> CreateAsync(int port, params IServiceHost[] serviceHosts)
     {
-        var server = new SimpleServer(serviceHosts);
-        server._token = await server.OpenAsync();
+        var server = new SimpleServer(serviceHosts) { Port = port };
+        server._token = await server.OpenAsync(CancellationToken.None);
         return server;
     }
 
     public async ValueTask DisposeAsync()
     {
-        await CloseAsync(_token, closeCode: 0);
+        await CloseAsync(_token, closeCode: 0, CancellationToken.None);
     }
 }
