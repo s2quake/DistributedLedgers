@@ -30,6 +30,8 @@ sealed class CommandContext : CommandContextBase
         };
         tsb.AppendLine("Type '--help | -h' for usage.");
         tsb.AppendLine("Type 'exit' to exit application.");
+        tsb.ResetOptions();
+        tsb.Append(string.Empty);
         Out.Write(tsb.ToString());
     }
 }
