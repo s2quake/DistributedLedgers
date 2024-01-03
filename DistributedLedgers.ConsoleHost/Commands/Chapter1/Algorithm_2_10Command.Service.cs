@@ -1,5 +1,4 @@
 using JSSoft.Communication;
-using JSSoft.Library.Threading;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
 
@@ -71,20 +70,17 @@ partial class Algorithm_2_10Command
         public async Task SendMessageAsync(int @lock, string message, CancellationToken cancellationToken)
         {
             await Service.SendMessageAsync(@lock, message, cancellationToken);
-            // await Console.Out.WriteLineAsync($"{_name}: {message}");
         }
 
         public async Task<int> LockAsync(CancellationToken cancellationToken)
         {
             _lock = await Service.LockAsync(cancellationToken);
-            // await Console.Out.WriteLineAsync($"{_name}: {message}");
             return _lock.Value;
         }
 
         public async Task UnlockAsync(int @lock, CancellationToken cancellationToken)
         {
             await Service.UnlockAsync(@lock, cancellationToken);
-            // await Console.Out.WriteLineAsync($"{_name}: {message}");
         }
     }
 }
