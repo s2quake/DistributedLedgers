@@ -5,7 +5,7 @@ namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
 
 partial class Algorithm_2_9Command
 {
-    sealed class Serializer : ServerContextBase
+    sealed class Serializer : IAsyncDisposable
     {
         private SimpleClient[] _senders = [];
         private SimpleServer? _receiver;
