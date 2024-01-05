@@ -44,6 +44,14 @@ static class PortUtility
         usedPortList.Remove(port);
     }
 
+    public static void ReleasePorts(int[] ports)
+    {
+        for (var i = 0; i < ports.Length; i++)
+        {
+            ReleasePort(ports[i]);
+        }
+    }
+
     private static int GetRandomPort()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);

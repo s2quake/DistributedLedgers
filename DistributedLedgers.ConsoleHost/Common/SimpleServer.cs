@@ -11,13 +11,24 @@ sealed class SimpleServer : ServerContextBase, IAsyncDisposable
     {
     }
 
-    public static Task<SimpleServer> CreateAsync(params IServiceHost[] serviceHosts) => CreateAsync(DefaultPort, serviceHosts);
+    public static Task<SimpleServer> CreateAsync(IServiceHost serviceHost, CancellationToken cancellationToken) => CreateAsync(DefaultPort, serviceHost, cancellationToken);
 
-    public static async Task<SimpleServer> CreateAsync(int port, params IServiceHost[] serviceHosts)
+    public static async Task<SimpleServer> CreateAsync(int port, IServiceHost serviceHost, CancellationToken cancellationToken)
     {
-        var server = new SimpleServer(serviceHosts) { Port = port };
-        server._token = await server.OpenAsync(CancellationToken.None);
+        var server = new SimpleServer([serviceHost]) { Port = port };
+        server._token = await server.OpenAsync(cancellationToken);
+        Console.WriteLine($"Server:{port} has been created.");
         return server;
+    }
+
+    public static async Task<AsyncDisposableCollection<SimpleServer>> CreateManyAsync(int[] ports, IServiceHost[] serviceHosts, CancellationToken cancellationToken)
+    {
+        var tasks = new Task<SimpleServer>[ports.Length];
+        for (var i = 0; i < tasks.Length; i++)
+        {
+            tasks[i] = CreateAsync(ports[i], serviceHosts[i], cancellationToken);
+        }
+        return await AsyncDisposableCollection<SimpleServer>.CreateAsync(tasks);
     }
 
     public async ValueTask DisposeAsync()

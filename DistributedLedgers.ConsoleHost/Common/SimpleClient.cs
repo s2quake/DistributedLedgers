@@ -11,13 +11,25 @@ sealed class SimpleClient : ClientContextBase, IAsyncDisposable
     {
     }
 
-    public static Task<SimpleClient> CreateAsync(params IServiceHost[] serviceHosts) => CreateAsync(DefaultPort, serviceHosts);
+    public static Task<SimpleClient> CreateAsync(IServiceHost serviceHost, CancellationToken cancellationToken) => CreateAsync(DefaultPort, serviceHost, cancellationToken);
 
-    public static async Task<SimpleClient> CreateAsync(int port, params IServiceHost[] serviceHosts)
+    public static async Task<SimpleClient> CreateAsync(int port, IServiceHost serviceHost, CancellationToken cancellationToken)
     {
-        var client = new SimpleClient(serviceHosts) { Port = port };
-        client._token = await client.OpenAsync(CancellationToken.None);
+        var client = new SimpleClient([serviceHost]) { Port = port };
+        client._token = await client.OpenAsync(cancellationToken);
+        Console.WriteLine($"Client:{port} has been created.");
         return client;
+    }
+
+
+    public static async Task<AsyncDisposableCollection<SimpleClient>> CreateManyAsync(int[] ports, IServiceHost[] serviceHosts, CancellationToken cancellationToken)
+    {
+        var tasks = new Task<SimpleClient>[ports.Length];
+        for (var i = 0; i < tasks.Length; i++)
+        {
+            tasks[i] = CreateAsync(ports[i], serviceHosts[i], cancellationToken);
+        }
+        return await AsyncDisposableCollection<SimpleClient>.CreateAsync(tasks);
     }
 
     public async ValueTask DisposeAsync()

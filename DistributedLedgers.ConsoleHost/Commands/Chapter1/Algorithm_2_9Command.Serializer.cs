@@ -10,16 +10,16 @@ partial class Algorithm_2_9Command
         private SimpleClient[] _senders = [];
         private SimpleServer? _receiver;
 
-        public static async Task<Serializer> CreateAsync(int port, int[] serverPorts)
+        public static async Task<Serializer> CreateAsync(int port, int[] serverPorts, CancellationToken cancellationToken)
         {
             var senders = new SimpleClient[serverPorts.Length];
             var senderServices = new SerializerSendService[serverPorts.Length];
             for (var i = 0; i < serverPorts.Length; i++)
             {
                 senderServices[i] = new SerializerSendService();
-                senders[i] = await SimpleClient.CreateAsync(serverPorts[i], senderServices[i]);
+                senders[i] = await SimpleClient.CreateAsync(serverPorts[i], senderServices[i], cancellationToken);
             }
-            var receiver = await SimpleServer.CreateAsync(port, new SerializerCallbackService(senderServices));
+            var receiver = await SimpleServer.CreateAsync(port, new SerializerCallbackService(senderServices), cancellationToken);
             return new Serializer
             {
                 _senders = senders,

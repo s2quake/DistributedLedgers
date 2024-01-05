@@ -20,6 +20,17 @@ sealed class AsyncDisposableCollection<T> : IEnumerable<T>, IAsyncDisposable whe
 
     public T this[int index] => _itemList[index];
 
+    public static async Task<AsyncDisposableCollection<T>> CreateAsync(Task<T>[] tasks)
+    {
+        var collection = new AsyncDisposableCollection<T>(tasks.Length);
+        await Task.WhenAll(tasks);
+        foreach (var item in tasks)
+        {
+            collection.Add(item.Result);
+        }
+        return collection;
+    }
+
     public void Add(T item)
     {
         _itemList.Add(item);
@@ -29,23 +40,16 @@ sealed class AsyncDisposableCollection<T> : IEnumerable<T>, IAsyncDisposable whe
 
     public int IndexOf(T item) => _itemList.IndexOf(item);
 
+    public async ValueTask DisposeAsync()
+    {
+        await Parallel.ForEachAsync(_itemList, (item, _) => item.DisposeAsync());
+    }
+
     #region IEnumerable
 
     IEnumerator<T> IEnumerable<T>.GetEnumerator() => _itemList.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => _itemList.GetEnumerator();
-
-    #endregion
-
-    #region IAsyncDisposable
-
-    async ValueTask IAsyncDisposable.DisposeAsync()
-    {
-        foreach (var item in _itemList)
-        {
-            await item.DisposeAsync();
-        }
-    }
 
     #endregion
 }

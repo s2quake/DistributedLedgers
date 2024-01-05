@@ -10,14 +10,14 @@ partial class Algorithm_2_10Command
         private IMessageService[] _senderServices = [];
         private int?[] _locks = [];
 
-        public static async Task<Client> CreateAsync(int[] serverPorts)
+        public static async Task<Client> CreateAsync(int[] serverPorts, CancellationToken cancellationToken)
         {
             var senders = new SimpleClient[serverPorts.Length];
             var senderServices = new ClientMessageService[serverPorts.Length];
             for (var i = 0; i < serverPorts.Length; i++)
             {
                 senderServices[i] = new ClientMessageService($"client {i}");
-                senders[i] = await SimpleClient.CreateAsync(serverPorts[i], senderServices[i]);
+                senders[i] = await SimpleClient.CreateAsync(serverPorts[i], senderServices[i], cancellationToken);
             }
             return new Client
             {

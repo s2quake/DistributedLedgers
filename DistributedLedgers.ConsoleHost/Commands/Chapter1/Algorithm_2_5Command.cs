@@ -18,8 +18,8 @@ sealed class Algorithm_2_5Command : CommandAsyncBase
     {
         var serverService = new ServerDataService();
         var clientService = new ClientDataService();
-        await using var server = await SimpleServer.CreateAsync(serverService);
-        await using var client = await SimpleClient.CreateAsync(clientService);
+        await using var server = await SimpleServer.CreateAsync(serverService, cancellationToken);
+        await using var client = await SimpleClient.CreateAsync(clientService, cancellationToken);
         var tryCount = 0;
         for (var i = 0; i < 10;)
         {

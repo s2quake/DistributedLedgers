@@ -22,13 +22,13 @@ sealed partial class Algorithm_2_12Command : CommandAsyncBase
         for (var i = 0; i < serverCount; i++)
         {
             serverServices[i] = new ServerMessageService($"server{i}");
-            servers.Add(await SimpleServer.CreateAsync(serverPorts[i], serverServices[i]));
+            servers.Add(await SimpleServer.CreateAsync(serverPorts[i], serverServices[i], cancellationToken));
         }
         var clientCount = 3;
         await using var clients = new AsyncDisposableCollection<Client>(capacity: clientCount);
         for (var i = 0; i < clientCount; i++)
         {
-            clients.Add(await Client.CreateAsync($"client {i}", serverPorts));
+            clients.Add(await Client.CreateAsync($"client {i}", serverPorts, cancellationToken));
         }
         Out.WriteLine("Nodes initialized.");
 
