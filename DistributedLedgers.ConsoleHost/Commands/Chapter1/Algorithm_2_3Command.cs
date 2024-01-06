@@ -2,7 +2,7 @@
 using System.ComponentModel.Composition;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
-using JSSoft.Library.Commands;
+using JSSoft.Commands;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
 

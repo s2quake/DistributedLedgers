@@ -1,14 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\.communication\JSSoft.Library\JSSoft.Library\JSSoft.Library.csproj" />
-    <ProjectReference Include="..\.communication\JSSoft.Library.Commands\JSSoft.Library.Commands\JSSoft.Library.Commands.csproj" />
-    <ProjectReference Include="..\.communication\JSSoft.Library.Commands\JSSoft.Library.Terminals\JSSoft.Library.Terminals.csproj" />
     <PackageReference Include="System.ComponentModel.Composition" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\.communication\JSSoft.Communication\JSSoft.Communication\JSSoft.Communication.csproj" />
+    <ProjectReference Include="..\.communication\JSSoft.Communication\JSSoft.Communication.csproj" />
+    <Reference Include="JSSoft.Commands.dll">
+      <HintPath>..\.communication\Assemblies\JSSoft.Commands.dll</HintPath>
+    </Reference>
+    <Reference Include="JSSoft.Terminals.dll">
+      <HintPath>..\.communication\Assemblies\JSSoft.Terminals.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <PropertyGroup>

@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 using JSSoft.Communication;
-using JSSoft.Library.Terminals;
+using JSSoft.Terminals;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
 

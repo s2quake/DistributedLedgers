@@ -33,6 +33,13 @@ sealed class SimpleServer : ServerContextBase, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await CloseAsync(_token, closeCode: 0, CancellationToken.None);
+        try
+        {
+            await CloseAsync(_token, closeCode: 0, CancellationToken.None);
+        }
+        catch
+        {
+            await AbortAsync(_token);
+        }
     }
 }

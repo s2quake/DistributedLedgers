@@ -1,8 +1,8 @@
 using System.ComponentModel.Composition;
 using DistributedLedgers.ConsoleHost.Common;
-using JSSoft.Library.Commands;
-using JSSoft.Library.Terminals;
-using JSSoft.Library.Threading;
+using JSSoft.Commands;
+using JSSoft.Terminals;
+using JSSoft.Communication.Threading;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
 
@@ -47,6 +47,7 @@ sealed partial class Algorithm_2_13Command : CommandAsyncBase
             }
             await Out.WriteAsync(tsb.ToString());
             PortUtility.ReleasePorts(serverPorts);
+            GC.Collect();
         }
     }
 }

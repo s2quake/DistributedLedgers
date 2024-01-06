@@ -5,59 +5,29 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLedgers.ConsoleHost", "DistributedLedgers.ConsoleHost\DistributedLedgers.ConsoleHost.csproj", "{55D12EA4-12B0-4680-A79F-215C33F29990}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".communication", ".communication", "{D9FD50E5-04C6-4AE1-92EE-CAB5CEBDE3D5}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".communication", ".communication", "{B948FD49-D2C3-4298-8B61-504773ED4F45}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JSSoft.Library", "JSSoft.Library", "{FD703EF4-F7E3-4D1E-8D98-21B66F633FA8}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSSoft.Library", ".communication\JSSoft.Library\JSSoft.Library\JSSoft.Library.csproj", "{E9579812-D1AA-4FA1-BD28-B3E325C6ABBC}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JSSoft.Communication", "JSSoft.Communication", "{D26C8DCB-30F5-4889-832B-9C6F1100D0E2}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSSoft.Communication", ".communication\JSSoft.Communication\JSSoft.Communication\JSSoft.Communication.csproj", "{2595D80A-E1CF-4FBF-8B6F-4F115ECA41C8}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JSSoft.Library.Commands", "JSSoft.Library.Commands", "{C9755495-87C6-47C6-BF1F-D4B4BD1AF7F6}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSSoft.Library.Commands", ".communication\JSSoft.Library.Commands\JSSoft.Library.Commands\JSSoft.Library.Commands.csproj", "{E9506488-35C8-4037-BD60-329A1198E499}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSSoft.Library.Terminals", ".communication\JSSoft.Library.Commands\JSSoft.Library.Terminals\JSSoft.Library.Terminals.csproj", "{7A3DA4A2-EB43-45C6-957A-56E16F079F87}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSSoft.Communication", ".communication\JSSoft.Communication\JSSoft.Communication.csproj", "{7B3EA443-39E7-40FC-8853-9443CA0C282A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{55D12EA4-12B0-4680-A79F-215C33F29990}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{55D12EA4-12B0-4680-A79F-215C33F29990}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{55D12EA4-12B0-4680-A79F-215C33F29990}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{55D12EA4-12B0-4680-A79F-215C33F29990}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E9579812-D1AA-4FA1-BD28-B3E325C6ABBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E9579812-D1AA-4FA1-BD28-B3E325C6ABBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E9579812-D1AA-4FA1-BD28-B3E325C6ABBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E9579812-D1AA-4FA1-BD28-B3E325C6ABBC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2595D80A-E1CF-4FBF-8B6F-4F115ECA41C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2595D80A-E1CF-4FBF-8B6F-4F115ECA41C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2595D80A-E1CF-4FBF-8B6F-4F115ECA41C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2595D80A-E1CF-4FBF-8B6F-4F115ECA41C8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E9506488-35C8-4037-BD60-329A1198E499}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E9506488-35C8-4037-BD60-329A1198E499}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E9506488-35C8-4037-BD60-329A1198E499}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E9506488-35C8-4037-BD60-329A1198E499}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7A3DA4A2-EB43-45C6-957A-56E16F079F87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7A3DA4A2-EB43-45C6-957A-56E16F079F87}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7A3DA4A2-EB43-45C6-957A-56E16F079F87}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7A3DA4A2-EB43-45C6-957A-56E16F079F87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B3EA443-39E7-40FC-8853-9443CA0C282A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B3EA443-39E7-40FC-8853-9443CA0C282A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B3EA443-39E7-40FC-8853-9443CA0C282A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B3EA443-39E7-40FC-8853-9443CA0C282A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{FD703EF4-F7E3-4D1E-8D98-21B66F633FA8} = {D9FD50E5-04C6-4AE1-92EE-CAB5CEBDE3D5}
-		{E9579812-D1AA-4FA1-BD28-B3E325C6ABBC} = {FD703EF4-F7E3-4D1E-8D98-21B66F633FA8}
-		{D26C8DCB-30F5-4889-832B-9C6F1100D0E2} = {D9FD50E5-04C6-4AE1-92EE-CAB5CEBDE3D5}
-		{2595D80A-E1CF-4FBF-8B6F-4F115ECA41C8} = {D26C8DCB-30F5-4889-832B-9C6F1100D0E2}
-		{C9755495-87C6-47C6-BF1F-D4B4BD1AF7F6} = {D9FD50E5-04C6-4AE1-92EE-CAB5CEBDE3D5}
-		{E9506488-35C8-4037-BD60-329A1198E499} = {C9755495-87C6-47C6-BF1F-D4B4BD1AF7F6}
-		{7A3DA4A2-EB43-45C6-957A-56E16F079F87} = {C9755495-87C6-47C6-BF1F-D4B4BD1AF7F6}
+		{7B3EA443-39E7-40FC-8853-9443CA0C282A} = {B948FD49-D2C3-4298-8B61-504773ED4F45}
 	EndGlobalSection
 EndGlobal

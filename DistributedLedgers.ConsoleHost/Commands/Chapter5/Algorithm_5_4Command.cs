@@ -1,6 +1,6 @@
 
 using System.ComponentModel.Composition;
-using JSSoft.Library.Commands;
+using JSSoft.Commands;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter5;
 

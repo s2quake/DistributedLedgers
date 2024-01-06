@@ -1,18 +1,18 @@
 using System.ComponentModel.Composition;
-using JSSoft.Library.Commands;
+using JSSoft.Commands;
 
 namespace DistributedLedgers.ConsoleHost.Commands;
 
 [Export(typeof(ICommand))]
 sealed class ConfigCommand : CommandBase
 {
-    private readonly ApplicationConfigurations _configurations;
+    // private readonly ApplicationConfigurations _configurations;
 
-    [ImportingConstructor]
-    public ConfigCommand(ApplicationConfigurations configurations)
-    {
-        _configurations = configurations;
-    }
+    // [ImportingConstructor]
+    // public ConfigCommand(ApplicationConfigurations configurations)
+    // {
+    //     _configurations = configurations;
+    // }
 
     [CommandPropertyRequired(DefaultValue = "")]
     public string Key { get; set; } = string.Empty;
@@ -22,20 +22,20 @@ sealed class ConfigCommand : CommandBase
 
     protected override void OnExecute()
     {
-        if (Key == string.Empty && Value == string.Empty)
-        {
-            foreach (var item in _configurations.Descriptors)
-            {
-                Out.Write(item);
-            }
-        }
-        else if (Value == string.Empty)
-        {
-            Out.WriteLine($"{_configurations.GetValue(Key)}");
-        }
-        else
-        {
-            _configurations.SetValue(Key, Value);
-        }
+        // if (Key == string.Empty && Value == string.Empty)
+        // {
+        //     foreach (var item in _configurations.Descriptors)
+        //     {
+        //         Out.Write(item);
+        //     }
+        // }
+        // else if (Value == string.Empty)
+        // {
+        //     Out.WriteLine($"{_configurations.GetValue(Key)}");
+        // }
+        // else
+        // {
+        //     _configurations.SetValue(Key, Value);
+        // }
     }
 }

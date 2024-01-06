@@ -52,63 +52,69 @@ partial class Algorithm_2_13Command
 
         public async Task RunAsync(string c, CancellationToken cancellationToken)
         {
-            var majority = _senderServices.Length / 2.0;
-            var origin = c;
-            var t = 0;
-            while (cancellationToken.IsCancellationRequested == false)
+            try
             {
-                // step 1
-                t++;
-                var tasks1 = new Task<(int, string?)?>[_senderServices.Length];
-                for (var i = 0; i < _senderServices.Length; i++)
+                var majority = _senderServices.Length / 2.0;
+                var origin = c;
+                var t = 0;
+                while (cancellationToken.IsCancellationRequested == false)
                 {
-                    tasks1[i] = _senderServices[i].RequestTicketAsync(t, cancellationToken);
-                }
-                await TryWhenAll(tasks1);
-                _tickets = [.. tasks1.Select(item => item.Result)];
-
-                // step 2
-                if (_tickets.Where(item => item is not null).Count() >= majority)
-                {
-                    var maxItem = _tickets.Where(item => item is not null).OrderBy(item => item!.Value.store).Last();
-                    if (maxItem!.Value.store > t)
-                    {
-                        c = maxItem!.Value.C!;
-                    }
-
-                    var tasks2 = new Task<bool>[_senderServices.Length];
-                    for (var i = 0; i < _tickets.Length; i++)
-                    {
-                        if (_tickets[i] is not null)
-                        {
-                            tasks2[i] = _senderServices[i].ProposeCommandAsync(t, c, cancellationToken);
-                        }
-                        else
-                        {
-                            tasks2[i] = Task<bool>.Run(() => false);
-                        }
-                    }
-                    await TryWhenAll(tasks2);
-                    _ready = [.. tasks2.Select(item => item.Result)];
-                }
-                else
-                {
-                    continue;
-                }
-
-                // step 3
-                if (_ready.Where(item => item).Count() >= majority)
-                {
-                    var tasks3 = new Task[_senderServices.Length];
+                    // step 1
+                    t++;
+                    var tasks1 = new Task<(int, string?)?>[_senderServices.Length];
                     for (var i = 0; i < _senderServices.Length; i++)
                     {
-                        tasks3[i] = _senderServices[i].ExecuteCommandAsync(c, cancellationToken);
+                        tasks1[i] = _senderServices[i].RequestTicketAsync(t, cancellationToken);
                     }
-                    await TryWhenAll(tasks3);
-                    return;
-                }
+                    await TryWhenAll(tasks1);
+                    _tickets = [.. tasks1.Select(item => item.Result)];
 
-                await Task.Delay(1, cancellationToken);
+                    // step 2
+                    if (_tickets.Where(item => item is not null).Count() >= majority)
+                    {
+                        var maxItem = _tickets.Where(item => item is not null).OrderBy(item => item!.Value.store).Last();
+                        if (maxItem!.Value.store > t)
+                        {
+                            c = maxItem!.Value.C!;
+                        }
+
+                        var tasks2 = new Task<bool>[_senderServices.Length];
+                        for (var i = 0; i < _tickets.Length; i++)
+                        {
+                            if (_tickets[i] is not null)
+                            {
+                                tasks2[i] = _senderServices[i].ProposeCommandAsync(t, c, cancellationToken);
+                            }
+                            else
+                            {
+                                tasks2[i] = Task<bool>.Run(() => false);
+                            }
+                        }
+                        await TryWhenAll(tasks2);
+                        _ready = [.. tasks2.Select(item => item.Result)];
+                    }
+                    else
+                    {
+                        continue;
+                    }
+
+                    // step 3
+                    if (_ready.Where(item => item).Count() >= majority)
+                    {
+                        var tasks3 = new Task[_senderServices.Length];
+                        for (var i = 0; i < _senderServices.Length; i++)
+                        {
+                            tasks3[i] = _senderServices[i].ExecuteCommandAsync(c, cancellationToken);
+                        }
+                        await TryWhenAll(tasks3);
+                        return;
+                    }
+
+                    await Task.Delay(1, cancellationToken);
+                }
+            }
+            catch
+            {
             }
         }
 

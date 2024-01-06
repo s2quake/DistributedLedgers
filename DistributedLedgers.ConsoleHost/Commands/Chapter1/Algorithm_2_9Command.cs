@@ -1,7 +1,7 @@
 using System.ComponentModel.Composition;
 using DistributedLedgers.ConsoleHost.Common;
-using JSSoft.Library.Commands;
-using JSSoft.Library.Terminals;
+using JSSoft.Commands;
+using JSSoft.Terminals;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
 

@@ -34,6 +34,13 @@ sealed class SimpleClient : ClientContextBase, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await CloseAsync(_token, closeCode: 0, CancellationToken.None);
+        try
+        {
+            await CloseAsync(_token, closeCode: 0, CancellationToken.None);
+        }
+        catch (Exception e)
+        {
+            await AbortAsync(_token);
+        }
     }
 }
