@@ -3,7 +3,7 @@ using JSSoft.Communication;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter3;
 
-partial class Algorithm_3_15Command
+partial class Algorithm_3_22Command
 {
     public interface INodeService
     {
@@ -12,6 +12,12 @@ partial class Algorithm_3_15Command
 
         [OperationContract]
         Task MyValueAsync(int nodeId, bool v, int round, CancellationToken cancellationToken);
+
+        [OperationContract]
+        Task MyCoinAsync(int nodeId, bool v, int round, CancellationToken cancellationToken);
+
+        [OperationContract]
+        Task MySetAsync(int nodeId, bool v, int round, CancellationToken cancellationToken);
     }
 
     sealed class ServerNodeService(string name) : ServerServiceHost<INodeService>, INodeService
@@ -30,6 +36,24 @@ partial class Algorithm_3_15Command
         }
 
         public async Task MyValueAsync(int nodeId, bool v, int round, CancellationToken cancellationToken)
+        {
+            await Task.CompletedTask;
+            if (_valuesByRound.GetOrAdd(round, new ConcurrentDictionary<int, bool>()) is { } values)
+            {
+                values.AddOrUpdate(nodeId, v, (key, oldValue) => v);
+            }
+        }
+
+        public async Task MyCoinAsync(int nodeId, bool v, int round, CancellationToken cancellationToken)
+        {
+            await Task.CompletedTask;
+            if (_valuesByRound.GetOrAdd(round, new ConcurrentDictionary<int, bool>()) is { } values)
+            {
+                values.AddOrUpdate(nodeId, v, (key, oldValue) => v);
+            }
+        }
+
+        public async Task MySetAsync(int nodeId, bool v, int round, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             if (_valuesByRound.GetOrAdd(round, new ConcurrentDictionary<int, bool>()) is { } values)
@@ -77,6 +101,16 @@ partial class Algorithm_3_15Command
         public async void BroadcastPropose(int nodeId, bool? v, int round)
         {
             await Service.ProposeAsync(nodeId, v, round, CancellationToken.None);
+        }
+
+        public async void BroadcastMyCoin(int nodeId, bool v, int round)
+        {
+            await Service.MyCoinAsync(nodeId, v, round, CancellationToken.None);
+        }
+
+        public async void BroadcastMySet(int nodeId, bool v, int round)
+        {
+            await Service.MySetAsync(nodeId, v, round, CancellationToken.None);
         }
     }
 }
