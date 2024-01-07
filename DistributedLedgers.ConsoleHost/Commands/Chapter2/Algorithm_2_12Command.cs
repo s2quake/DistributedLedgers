@@ -2,7 +2,7 @@ using System.ComponentModel.Composition;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Commands;
 
-namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
+namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 [Export(typeof(ICommand))]
 sealed partial class Algorithm_2_12Command : CommandAsyncBase

@@ -1,6 +1,6 @@
 using JSSoft.Communication;
 
-namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
+namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 partial class Algorithm_2_10Command
 {
@@ -16,7 +16,7 @@ partial class Algorithm_2_10Command
         Task UnlockAsync(int @lock, CancellationToken cancellationToken);
     }
 
-    sealed class ServerMessageService(string name) : ServerServiceHostBase<IMessageService>, IMessageService
+    sealed class ServerMessageService(string name) : ServerServiceHost<IMessageService>, IMessageService
     {
         private static readonly object obj = new();
         private readonly string _name = name;
@@ -62,7 +62,7 @@ partial class Algorithm_2_10Command
         }
     }
 
-    sealed class ClientMessageService(string name) : ClientServiceHostBase<IMessageService>, IMessageService
+    sealed class ClientMessageService(string name) : ClientServiceHost<IMessageService>, IMessageService
     {
         private readonly string _name = name;
         private int? _lock;

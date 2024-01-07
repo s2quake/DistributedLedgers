@@ -4,7 +4,7 @@ using JSSoft.Commands;
 using JSSoft.Terminals;
 using JSSoft.Communication.Threading;
 
-namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
+namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 [Export(typeof(ICommand))]
 sealed partial class Algorithm_2_13Command : CommandAsyncBase

@@ -1,6 +1,6 @@
 using JSSoft.Communication;
 
-namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
+namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 partial class Algorithm_2_13Command
 {
@@ -16,7 +16,7 @@ partial class Algorithm_2_13Command
         Task ExecuteCommandAsync(string c, CancellationToken cancellationToken);
     }
 
-    sealed class ServerMessageService(string name) : ServerServiceHostBase<ICommandService>, ICommandService
+    sealed class ServerMessageService(string name) : ServerServiceHost<ICommandService>, ICommandService
     {
         private static readonly object obj = new();
         private readonly string _name = name;
@@ -32,6 +32,7 @@ partial class Algorithm_2_13Command
         public async Task<(int store, string? C)?> RequestTicketAsync(int ticket, CancellationToken cancellationToken)
         {
             // await Task.Delay(Random.Shared.Next(100, 1000), cancellationToken);
+            await Task.CompletedTask;
             lock (obj)
             {
                 if (ticket > _Tmax)
@@ -46,6 +47,7 @@ partial class Algorithm_2_13Command
         public async Task<bool> ProposeCommandAsync(int t, string c, CancellationToken cancellationToken)
         {
             // await Task.Delay(Random.Shared.Next(100, 1000), cancellationToken);
+            await Task.CompletedTask;
             lock (obj)
             {
                 if (t == _Tmax)
@@ -61,6 +63,7 @@ partial class Algorithm_2_13Command
         public async Task ExecuteCommandAsync(string c, CancellationToken cancellationToken)
         {
             // await Task.Delay(Random.Shared.Next(100, 1000), cancellationToken);
+            await Task.CompletedTask;
             lock (obj)
             {
                 Console.WriteLine($"{_name}: {c}");
@@ -69,7 +72,7 @@ partial class Algorithm_2_13Command
         }
     }
 
-    sealed class ClientMessageService(string name) : ClientServiceHostBase<ICommandService>, ICommandService
+    sealed class ClientMessageService(string name) : ClientServiceHost<ICommandService>, ICommandService
     {
         private readonly string _name = name;
 

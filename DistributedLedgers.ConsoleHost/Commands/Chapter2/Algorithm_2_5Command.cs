@@ -4,7 +4,7 @@ using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
 using JSSoft.Commands;
 
-namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
+namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 [Export(typeof(ICommand))]
 sealed class Algorithm_2_5Command : CommandAsyncBase
@@ -48,7 +48,7 @@ sealed class Algorithm_2_5Command : CommandAsyncBase
         void OnMessageSended(string message);
     }
 
-    sealed class ServerDataService : ServerServiceHostBase<IDataService, IDataServiceCallback>, IDataService
+    sealed class ServerDataService : ServerServiceHost<IDataService, IDataServiceCallback>, IDataService
     {
         public async Task SendMessageAsync(string message, CancellationToken cancellationToken)
         {
@@ -60,7 +60,7 @@ sealed class Algorithm_2_5Command : CommandAsyncBase
         }
     }
 
-    sealed class ClientDataService : ClientServiceHostBase<IDataService, IDataServiceCallback>, IDataServiceCallback
+    sealed class ClientDataService : ClientServiceHost<IDataService, IDataServiceCallback>, IDataServiceCallback
     {
         private readonly ManualResetEvent _manualResetEvent = new(initialState: false);
 

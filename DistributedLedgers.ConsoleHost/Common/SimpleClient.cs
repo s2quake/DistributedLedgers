@@ -2,7 +2,7 @@ using JSSoft.Communication;
 
 namespace DistributedLedgers.ConsoleHost.Common;
 
-sealed class SimpleClient : ClientContextBase, IAsyncDisposable
+sealed class SimpleClient : ClientContext, IAsyncDisposable
 {
     private Guid _token;
 

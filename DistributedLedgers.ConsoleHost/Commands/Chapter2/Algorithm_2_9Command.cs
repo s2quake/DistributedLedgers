@@ -3,7 +3,7 @@ using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Commands;
 using JSSoft.Terminals;
 
-namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
+namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 [Export(typeof(ICommand))]
 sealed partial class Algorithm_2_9Command : CommandAsyncBase

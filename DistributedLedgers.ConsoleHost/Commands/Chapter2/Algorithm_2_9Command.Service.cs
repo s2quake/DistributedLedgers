@@ -1,6 +1,6 @@
 using JSSoft.Communication;
 
-namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
+namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 partial class Algorithm_2_9Command
 {
@@ -10,7 +10,7 @@ partial class Algorithm_2_9Command
         Task SendMessageAsync(int index, string message, CancellationToken cancellationToken);
     }
 
-    sealed class ServerMessageService(string name) : ServerServiceHostBase<IMessageService>, IMessageService
+    sealed class ServerMessageService(string name) : ServerServiceHost<IMessageService>, IMessageService
     {
         private readonly string _name = name;
         private readonly Dictionary<int, string> _messageByIndex = [];
@@ -28,7 +28,7 @@ partial class Algorithm_2_9Command
         }
     }
 
-    sealed class ClientMessageService(string name) : ClientServiceHostBase<IMessageService>, IMessageService
+    sealed class ClientMessageService(string name) : ClientServiceHost<IMessageService>, IMessageService
     {
         private readonly string _name = name;
 

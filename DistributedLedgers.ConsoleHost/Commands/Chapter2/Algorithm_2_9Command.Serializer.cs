@@ -1,7 +1,7 @@
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
 
-namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
+namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 partial class Algorithm_2_9Command
 {
@@ -39,7 +39,7 @@ partial class Algorithm_2_9Command
         }
     }
 
-    sealed class SerializerSendService : ClientServiceHostBase<IMessageService>, IMessageService
+    sealed class SerializerSendService : ClientServiceHost<IMessageService>, IMessageService
     {
         public async Task SendMessageAsync(int index, string message, CancellationToken cancellationToken)
         {
@@ -47,7 +47,7 @@ partial class Algorithm_2_9Command
         }
     }
 
-    sealed class SerializerCallbackService(IMessageService[] dataServices) : ServerServiceHostBase<IMessageService>, IMessageService
+    sealed class SerializerCallbackService(IMessageService[] dataServices) : ServerServiceHost<IMessageService>, IMessageService
     {
         private readonly IMessageService[] _dataServices = dataServices;
 

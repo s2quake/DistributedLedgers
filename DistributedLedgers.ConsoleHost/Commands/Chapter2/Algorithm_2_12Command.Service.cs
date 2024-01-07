@@ -1,8 +1,7 @@
-using System.Runtime.CompilerServices;
 using JSSoft.Communication;
 using JSSoft.Terminals;
 
-namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
+namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 partial class Algorithm_2_12Command
 {
@@ -18,7 +17,7 @@ partial class Algorithm_2_12Command
         Task ExecuteCommandAsync(CancellationToken cancellationToken);
     }
 
-    sealed class ServerMessageService(string name) : ServerServiceHostBase<ICommandService>, ICommandService
+    sealed class ServerMessageService(string name) : ServerServiceHost<ICommandService>, ICommandService
     {
         private static readonly object obj = new();
         private readonly string _name = name;
@@ -66,7 +65,7 @@ partial class Algorithm_2_12Command
         }
     }
 
-    sealed class ClientMessageService(string name) : ClientServiceHostBase<ICommandService>, ICommandService
+    sealed class ClientMessageService(string name) : ClientServiceHost<ICommandService>, ICommandService
     {
         private readonly string _name = name;
         private int _ticket;

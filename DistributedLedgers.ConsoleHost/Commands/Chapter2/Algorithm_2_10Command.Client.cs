@@ -1,6 +1,6 @@
 using DistributedLedgers.ConsoleHost.Common;
 
-namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
+namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 partial class Algorithm_2_10Command
 {

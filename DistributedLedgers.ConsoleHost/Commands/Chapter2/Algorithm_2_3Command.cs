@@ -4,7 +4,7 @@ using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
 using JSSoft.Commands;
 
-namespace DistributedLedgers.ConsoleHost.Commands.Chapter1;
+namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 [Export(typeof(ICommand))]
 sealed class Algorithm_2_3Command : CommandAsyncBase
@@ -32,7 +32,7 @@ sealed class Algorithm_2_3Command : CommandAsyncBase
         void SendMessage(string message);
     }
 
-    sealed class ServerDataService : ServerServiceHostBase<IDataService>, IDataService
+    sealed class ServerDataService : ServerServiceHost<IDataService>, IDataService
     {
         public void SendMessage(string message)
         {
@@ -40,7 +40,7 @@ sealed class Algorithm_2_3Command : CommandAsyncBase
         }
     }
 
-    sealed class ClientDataService : ClientServiceHostBase<IDataService>, IDataService
+    sealed class ClientDataService : ClientServiceHost<IDataService>, IDataService
     {
         public void SendMessage(string message)
         {
