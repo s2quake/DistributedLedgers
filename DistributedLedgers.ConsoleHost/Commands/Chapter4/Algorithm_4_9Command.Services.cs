@@ -14,11 +14,10 @@ partial class Algorithm_4_9Command
         Task SendManyAsync((int nodeId, int value)[] values, CancellationToken cancellationToken);
     }
 
-    sealed class ServerNodeService(string name) : ServerServiceHost<INodeService>, INodeService
+    sealed class ServerNodeService : ServerServiceHost<INodeService>, INodeService
     {
-        private readonly string _name = name;
         private readonly ConcurrentDictionary<int, int> _valueByNode = new();
-        private readonly ConcurrentBag<(int nodeId, int value)[]> _values = new();
+        private readonly ConcurrentBag<(int nodeId, int value)[]> _values = [];
 
         public async Task SendAsync(int nodeId, int value, CancellationToken cancellationToken)
         {
@@ -59,10 +58,8 @@ partial class Algorithm_4_9Command
         }
     }
 
-    sealed class ClientNodeService(string name) : ClientServiceHost<INodeService>
+    sealed class ClientNodeService : ClientServiceHost<INodeService>
     {
-        private readonly string _name = name;
-
         public async void SendValue(int nodeId, int value)
         {
             await Service.SendAsync(nodeId, value, CancellationToken.None);

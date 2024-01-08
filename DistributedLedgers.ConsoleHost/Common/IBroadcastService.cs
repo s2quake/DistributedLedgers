@@ -1,6 +1,6 @@
-namespace DistributedLedgers.ConsoleHost;
+// namespace DistributedLedgers.ConsoleHost;
 
-interface IBroadcastService
-{
-    void Broadcast(object sender, int type, params object[] args);
-}
+// interface IBroadcastService
+// {
+//     void Broadcast(object sender, int type, params object[] args);
+// }

@@ -1,47 +1,82 @@
-namespace DistributedLedgers.ConsoleHost;
+using JSSoft.Communication;
 
-abstract class NodeBase : IDisposable
+namespace DistributedLedgers.ConsoleHost.Common;
+
+abstract class NodeBase<TServerService, TClientService>
+    : IAsyncDisposable
+    where TServerService : class, IServiceHost
+    where TClientService : class, IServiceHost
 {
-    private readonly CancellationTokenSource _cancellationTokenSource = new();
-    private bool _isDisposed;
-    private Task? _processTask;
+    private readonly List<SimpleClient> _clientList = [];
+    private readonly Dictionary<SimpleClient, TClientService> _clientServiceByClient = [];
+    private readonly List<NodeBase<TServerService, TClientService>> _nodeList = [];
+    private SimpleServer? _server;
+    private TServerService? _serverService;
+    private int _index = -1;
 
-    public void BroadcastMessage(int type, params object[] args)
+    public int Port => _server?.Port ?? throw new InvalidOperationException();
+
+    public int Index => _index;
+
+    public IReadOnlyList<NodeBase<TServerService, TClientService>> Nodes => _nodeList;
+
+    public static async Task<T> CreateAsync<T>(int index, int port, CancellationToken cancellationToken)
+        where T : NodeBase<TServerService, TClientService>, new()
     {
-        ObjectDisposedException.ThrowIf(condition: _isDisposed, this);
-        BroadcastService!.Broadcast(this, type, args);
+        var node = (T)Activator.CreateInstance(typeof(T))!;
+        var serverService = node.CreateServerService();
+        var server = await SimpleServer.CreateAsync(port, serverService, cancellationToken);
+        node._server = server;
+        node._serverService = serverService;
+        node._index = index;
+        return node;
     }
 
-    public void ReceiveMessage(int type, object[] args)
+    public static async Task<AsyncDisposableCollection<T>> CreateManyAsync<T>(int[] ports, CancellationToken cancellationToken)
+        where T : NodeBase<TServerService, TClientService>, new()
     {
-        ObjectDisposedException.ThrowIf(condition: _isDisposed, this);
-        OnMessageReceived(type, args);
+        var creationTasks = Enumerable.Range(0, ports.Length).Select(item => CreateAsync<T>(item, ports[item], cancellationToken)).ToArray();
+        await Task.WhenAll(creationTasks);
+        var nodes = await AsyncDisposableCollection<T>.CreateAsync(creationTasks);
+        await Parallel.ForEachAsync(nodes, cancellationToken, (item, cancellationToken) => AttachNodesAsync(item, nodes, cancellationToken));
+        return nodes;
     }
 
-    public void Dispose()
+    public async ValueTask AddNodeAsync(NodeBase<TServerService, TClientService> node, CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(condition: _isDisposed, this);
-        _cancellationTokenSource.Cancel();
-        OnDispose();
-        _isDisposed = true;
+        var port = node.Port;
+        var clientService = CreateClientService();
+        var client = await SimpleClient.CreateAsync(port, clientService, cancellationToken);
+        _clientList.Add(client);
+        _clientServiceByClient.Add(client, clientService);
+        _nodeList.Add(node);
     }
 
-    protected abstract Task OnProcess(CancellationToken cancellationToken);
-
-    protected virtual void OnDispose()
+    public async ValueTask DisposeAsync()
     {
+        await Parallel.ForEachAsync(_clientList, (item, _) => item.DisposeAsync());
+        if (_server != null)
+            await _server.DisposeAsync();
+        _server = null;
+        _serverService = null;
     }
 
-    protected virtual void OnMessageReceived(int type, object[] args)
+    protected TServerService ServerService => _serverService ?? throw new InvalidOperationException();
+
+    protected void Broadcast(Action<TClientService> action)
     {
+        Parallel.ForEach(_clientServiceByClient.Values, action.Invoke);
     }
 
-    public bool IsDisposed => _isDisposed;
+    protected virtual TServerService CreateServerService()
+        => (TServerService)Activator.CreateInstance(typeof(TServerService))!;
 
-    internal IBroadcastService? BroadcastService { get; set; }
+    protected virtual TClientService CreateClientService()
+        => (TClientService)Activator.CreateInstance(typeof(TClientService))!;
 
-    async Task ProcessAsync()
+    private static async ValueTask AttachNodesAsync(NodeBase<TServerService, TClientService> node, IEnumerable<NodeBase<TServerService, TClientService>> nodes, CancellationToken cancellationToken)
     {
-        _processTask = OnProcess(_cancellationTokenSource.Token);
+        var others = nodes.Where(item => item != node);
+        await Parallel.ForEachAsync(others, cancellationToken, node.AddNodeAsync);
     }
 }
