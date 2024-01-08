@@ -54,6 +54,7 @@ partial class Algorithm_3_22Command
 
             while (true)
             {
+                var c = await RunSharedCoinAsync(cancellationToken);
                 // propose
                 var values = await _serverService.WaitForValuesAsync(round, majority, cancellationToken);
                 if (values.Distinct().Count() == 1)
@@ -85,7 +86,7 @@ partial class Algorithm_3_22Command
                 }
                 else
                 {
-                    v = Random.Shared.Next() % 2 == 0;
+                    v = c;
                 }
                 round++;
                 BroadcastMyValue(v, round);
@@ -93,10 +94,22 @@ partial class Algorithm_3_22Command
             throw new NotImplementedException();
         }
 
-        private async Task RunSharedCoinAsnyc(CancellationToken cancellationToken)
+        private async Task<bool> RunSharedCoinAsync(CancellationToken cancellationToken)
         {
             var nodeCount = _clientList.Count + 1;
+            var f = nodeCount / 3.0 - 1;
+            var majority = nodeCount - f;
             var c = Random.Shared.Next() % nodeCount != 0;
+
+            // _serverService.ClearCoins();
+            BroadcastMyCoin(c);
+
+            var cu = await _serverService.WaitForCoinAsync(majority, cancellationToken);
+            BroadcastMySet(cu);
+            var coins = await _serverService.WaitForSetAsync(majority, cancellationToken);
+            if (coins.Contains(false) == true)
+                return false;
+            return true;
         }
 
         private void BroadcastPropose(bool? v, int round)
@@ -109,9 +122,14 @@ partial class Algorithm_3_22Command
             Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMyValue(Port, v, round));
         }
 
-        private void BroadcastMyCoin(bool v, int round)
+        private void BroadcastMyCoin(bool c)
         {
-            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMyCoin(Port, v, round));
+            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMyCoin(Port, c));
+        }
+
+        private void BroadcastMySet(bool[] cu)
+        {
+            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMySet(Port, cu));
         }
     }
 }

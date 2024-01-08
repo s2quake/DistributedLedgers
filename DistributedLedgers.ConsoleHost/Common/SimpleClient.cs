@@ -38,7 +38,7 @@ sealed class SimpleClient : ClientContext, IAsyncDisposable
         {
             await CloseAsync(_token, closeCode: 0, CancellationToken.None);
         }
-        catch (Exception e)
+        catch
         {
             await AbortAsync(_token);
         }
