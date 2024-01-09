@@ -63,17 +63,19 @@ partial class Algorithm_4_14Command
     {
         public int Value { get; private set; }
 
-        public async ValueTask RunAsync(CancellationToken cancellationToken)
+        public async ValueTask RunAsync(int value, CancellationToken cancellationToken)
         {
-            var x = Random.Shared.Next();
+            var x = value;
             var n = Nodes.Count + 1;
-            var f = n % 3 == 0 ? (n / 3 - 1) : (int)Math.Floor(n / 3.0);
+            var f = ByzantineUtility.GetByzantineCount(n, (n, f) => f < n / 3.0);
             var nodeIndex = Index;
 
-            for (var i = 0; i <= f; i++)
+            for (var i = 1; i <= f + 1; i++)
             {
                 // round 1
-                Broadcast(item => item.Value(nodeIndex, x));
+                var x1 = IsByzantine == true ? NextValue() : x;
+                Console.WriteLine($"{this}: step {i}, round 1, value => {x1}");
+                Broadcast(item => item.Value(nodeIndex, x1));
 
                 // round 2
                 var valueByNodeIndex = await ServerService.WaitForValueAsync(cancellationToken);
@@ -82,32 +84,48 @@ partial class Algorithm_4_14Command
                             .FirstOrDefault();
                 if (v1 != null)
                 {
-                    Broadcast(item => item.Propose(nodeIndex, v1.Key));
+                    var v2 = IsByzantine == true ? NextValue() : v1.Key;
+                    Console.WriteLine($"{this}: step {i}, round 2, propose => {v2}");
+                    Broadcast(item => item.Propose(nodeIndex, v2));
                 }
 
                 var proposeByNodeIndex = await ServerService.WaitForProposeAsync(cancellationToken);
                 var p1 = proposeByNodeIndex.ToLookup(item => item.Value)
+                            .OrderByDescending(item => item.Count())
                             .Where(item => item.Count() >= f)
                             .FirstOrDefault();
                 if (p1 != null)
                 {
                     x = p1.Key;
+                    Console.WriteLine($"{this}: step {i}, round 2, set <= {x}");
                 }
 
                 // round 3
                 if (nodeIndex == i)
                 {
-                    Broadcast(item => item.Propose(nodeIndex, x));
+                    var x2 = IsByzantine == true ? NextValue() : x;
+                    Broadcast(item => item.Propose(nodeIndex, x2));
+                    Console.WriteLine($"{this}: step {i}, round 3, 👑, propose => {x2}");
                 }
 
                 var proposeByNodeIndex2 = await ServerService.WaitForProposeAsync(cancellationToken);
                 var p2 = proposeByNodeIndex2.Values.Where(item => item == x);
-                if (p2.Count() < (n - f) && proposeByNodeIndex2.TryGetValue(i, out int value))
+                if (p2.Count() < (n - f))
                 {
-                    x = value;
+                    if (proposeByNodeIndex2.TryGetValue(i, out var p3) == true)
+                    {
+                        x = p3;
+                        Console.WriteLine($"{this}: step {i}, round 3, set <= {p3}");
+                    }
+                    else if (i != nodeIndex)
+                    {
+                        Console.WriteLine($"{this}: step {i}, round 3, king's value does not exist.");
+                    }
                 }
             }
             Value = x;
         }
+
+        private static int NextValue() => Random.Shared.Next();
     }
 }

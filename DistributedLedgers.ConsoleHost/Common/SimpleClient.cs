@@ -17,7 +17,7 @@ sealed class SimpleClient : ClientContext, IAsyncDisposable
     {
         var client = new SimpleClient([serviceHost]) { Port = port };
         client._token = await client.OpenAsync(cancellationToken);
-        Console.WriteLine($"Client:{port} has been created.");
+        // Console.WriteLine($"Client: {client} has been created.");
         return client;
     }
 

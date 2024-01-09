@@ -17,7 +17,7 @@ sealed class SimpleServer : ServerContext, IAsyncDisposable
     {
         var server = new SimpleServer([serviceHost]) { Port = port };
         server._token = await server.OpenAsync(cancellationToken);
-        Console.WriteLine($"Server:{port} has been created.");
+        // Console.WriteLine($"Server: {server} has been created.");
         return server;
     }
 

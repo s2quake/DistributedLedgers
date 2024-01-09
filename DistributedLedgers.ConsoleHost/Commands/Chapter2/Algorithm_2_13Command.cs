@@ -46,7 +46,6 @@ sealed partial class Algorithm_2_13Command : CommandAsyncBase
                 }
             }
             await Out.WriteAsync(tsb.ToString());
-            PortUtility.ReleasePorts(serverPorts);
             GC.Collect();
         }
     }

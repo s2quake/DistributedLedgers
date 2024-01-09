@@ -32,7 +32,6 @@ sealed partial class Algorithm_3_15Command : CommandAsyncBase
             tsb.Append(string.Empty);
         }
         await Out.WriteAsync(tsb.ToString());
-        PortUtility.ReleasePorts(ports);
     }
 
     private static async ValueTask AttachNodesAsync(Node node, IEnumerable<Node> nodes, CancellationToken cancellationToken)

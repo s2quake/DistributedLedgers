@@ -27,6 +27,5 @@ sealed partial class Algorithm_4_9Command : CommandAsyncBase
             tsb.Append(string.Empty);
         }
         await Out.WriteAsync(tsb.ToString());
-        PortUtility.ReleasePorts(ports);
     }
 }
