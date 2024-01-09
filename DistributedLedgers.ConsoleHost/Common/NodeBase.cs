@@ -1,6 +1,4 @@
-using System.Runtime.CompilerServices;
 using JSSoft.Communication;
-using Newtonsoft.Json.Serialization;
 
 namespace DistributedLedgers.ConsoleHost.Common;
 
@@ -53,10 +51,10 @@ abstract class NodeBase<TServerService, TClientService>
         where T : NodeBase<TServerService, TClientService>, new()
     {
         var byzantineIndexes = GetByzantineIndexes();
-        var creationTasks = Enumerable.Range(0, ports.Length).Select(item => CreateAsync<T>(item, isByzantine: byzantineIndexes.Contains(item), ports[item], cancellationToken)).ToArray();
+        var creationTasks = Enumerable.Range(0, ports.Length).OrderBy(item => Random.Shared.Next()).Select(item => CreateAsync<T>(item, isByzantine: byzantineIndexes.Contains(item), ports[item], cancellationToken)).ToArray();
         await Task.WhenAll(creationTasks);
         var nodes = await AsyncDisposableCollection<T>.CreateAsync(creationTasks);
-        await Parallel.ForEachAsync(nodes, cancellationToken, (item, cancellationToken) => AttachNodesAsync(item, nodes, cancellationToken));
+        await Task.WhenAll(nodes.OrderBy(item => item.GetHashCode()).Select(item => AttachNodesAsync(item, nodes, cancellationToken)));
         return nodes;
 
         int[] GetByzantineIndexes()
@@ -73,7 +71,7 @@ abstract class NodeBase<TServerService, TClientService>
         }
     }
 
-    public async ValueTask AddNodeAsync(NodeBase<TServerService, TClientService> node, CancellationToken cancellationToken)
+    public async Task AddNodeAsync(NodeBase<TServerService, TClientService> node, CancellationToken cancellationToken)
     {
         var port = node.Port;
         var clientService = CreateClientService();
@@ -118,10 +116,10 @@ abstract class NodeBase<TServerService, TClientService>
     protected virtual TClientService CreateClientService()
         => (TClientService)Activator.CreateInstance(typeof(TClientService))!;
 
-    private static async ValueTask AttachNodesAsync(NodeBase<TServerService, TClientService> node, IEnumerable<NodeBase<TServerService, TClientService>> nodes, CancellationToken cancellationToken)
+    private static async Task AttachNodesAsync(NodeBase<TServerService, TClientService> node, IEnumerable<NodeBase<TServerService, TClientService>> nodes, CancellationToken cancellationToken)
     {
         var others = nodes.Where(item => item != node);
-        await Parallel.ForEachAsync(others, cancellationToken, node.AddNodeAsync);
+        await Task.WhenAll(others.Select(item => node.AddNodeAsync(item, cancellationToken)));
         Console.WriteLine($"{node}: is connected to all nodes.");
     }
 }

@@ -63,11 +63,9 @@ partial class Algorithm_4_14Command
     {
         public int Value { get; private set; }
 
-        public async ValueTask RunAsync(int value, CancellationToken cancellationToken)
+        public async ValueTask RunAsync(int x, int f, CancellationToken cancellationToken)
         {
-            var x = value;
             var n = Nodes.Count + 1;
-            var f = ByzantineUtility.GetByzantineCount(n, (n, f) => f < n / 3.0);
             var nodeIndex = Index;
 
             for (var i = 1; i <= f + 1; i++)

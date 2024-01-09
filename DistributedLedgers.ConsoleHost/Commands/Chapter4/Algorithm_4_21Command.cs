@@ -7,10 +7,10 @@ using JSSoft.Terminals;
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter4;
 
 [Export(typeof(ICommand))]
-sealed partial class Algorithm_4_14Command : CommandAsyncBase
+sealed partial class Algorithm_4_21Command : CommandAsyncBase
 {
-    public Algorithm_4_14Command()
-        : base("alg-4-14")
+    public Algorithm_4_21Command()
+        : base("alg-4-21")
     {
     }
 
@@ -26,11 +26,11 @@ sealed partial class Algorithm_4_14Command : CommandAsyncBase
         while (r-- > 0 && cancellationToken.IsCancellationRequested != true)
         {
             var n = NodeCount;
-            var f = ByzantineUtility.GetByzantineCount(n, (n, f) => f < n / 3.0);
+            var f = ByzantineUtility.GetByzantineCount(n, (n, f) => f < n / 10.0);
             var ports = PortUtility.GetPorts(n);
             await using var nodes = await Node.CreateManyAsync<Node>(ports, f, cancellationToken);
-            Console.WriteLine("============ consensus ============");
-            await Parallel.ForEachAsync(nodes, cancellationToken, (item, cancellationToken) => item.RunAsync(Random.Shared.Next(), f, cancellationToken));
+            await Out.WriteLineAsync("============ consensus ============");
+            await Task.WhenAll(nodes.OrderBy(item => item.GetHashCode()).Select(item => item.RunAsync(Random.Shared.Next() % 2 == 0, f, cancellationToken)));
 
             var tsb = new TerminalStringBuilder();
             tsb.AppendLine("============  result  ============");
