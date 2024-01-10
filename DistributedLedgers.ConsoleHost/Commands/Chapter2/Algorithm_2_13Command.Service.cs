@@ -23,7 +23,7 @@ partial class Algorithm_2_13Command
         private string? _C;
         private int _Tmax;
         private int _Tstore;
-        private readonly List<string> _executedList = new();
+        private readonly List<string> _executedList = [];
 
         public string[] ExecutedCommands => _executedList.ToArray();
 

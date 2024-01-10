@@ -6,8 +6,8 @@ partial class Algorithm_3_15Command
 {
     sealed class Node : IAsyncDisposable
     {
-        private readonly List<SimpleClient> _clientList = new();
-        private readonly Dictionary<SimpleClient, ClientNodeService> _clientServiceByClient = new();
+        private readonly List<SimpleClient> _clientList = [];
+        private readonly Dictionary<SimpleClient, ClientNodeService> _clientServiceByClient = [];
         private readonly SimpleServer _server;
         private readonly ServerNodeService _serverService;
 
