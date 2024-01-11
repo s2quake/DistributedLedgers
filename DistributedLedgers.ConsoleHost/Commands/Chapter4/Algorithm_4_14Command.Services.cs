@@ -59,7 +59,7 @@ partial class Algorithm_4_14Command
         }
     }
 
-    sealed class Node : NodeBase<ServerNodeService, ClientNodeService>
+    sealed class Node : NodeBase<Node, ServerNodeService, ClientNodeService>
     {
         public int Value { get; private set; }
 
@@ -73,7 +73,7 @@ partial class Algorithm_4_14Command
                 // round 1
                 var x1 = IsByzantine == true ? NextValue() : x;
                 Console.WriteLine($"{this}: step {i}, round 1, value => {x1}");
-                Broadcast(item => item.Value(nodeIndex, x1));
+                Broadcast((_, service) => service.Value(nodeIndex, x1));
 
                 // round 2
                 var valueByNodeIndex = await ServerService.WaitForValueAsync(cancellationToken);
@@ -84,7 +84,7 @@ partial class Algorithm_4_14Command
                 {
                     var v2 = IsByzantine == true ? NextValue() : v1.Key;
                     Console.WriteLine($"{this}: step {i}, round 2, propose => {v2}");
-                    Broadcast(item => item.Propose(nodeIndex, v2));
+                    Broadcast((_, service) => service.Propose(nodeIndex, v2));
                 }
 
                 var proposeByNodeIndex = await ServerService.WaitForProposeAsync(cancellationToken);
@@ -102,7 +102,7 @@ partial class Algorithm_4_14Command
                 if (nodeIndex == i)
                 {
                     var x2 = IsByzantine == true ? NextValue() : x;
-                    Broadcast(item => item.Propose(nodeIndex, x2));
+                    Broadcast((_, service) => service.Propose(nodeIndex, x2));
                     Console.WriteLine($"{this}: step {i}, round 3, 👑, propose => {x2}");
                 }
 

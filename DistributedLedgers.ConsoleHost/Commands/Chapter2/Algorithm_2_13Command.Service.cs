@@ -1,3 +1,5 @@
+#pragma warning disable cSpell
+
 using JSSoft.Communication;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;

@@ -17,7 +17,7 @@ sealed partial class Algorithm_4_9Command : CommandAsyncBase
     {
         var nodeCount = 10;
         var ports = PortUtility.GetPorts(nodeCount);
-        await using var nodes = await Node.CreateManyAsync<Node>(ports, cancellationToken);
+        await using var nodes = await Node.CreateManyAsync(ports, cancellationToken);
         await Parallel.ForEachAsync(nodes, cancellationToken, (item, cancellationToken) => item.RunAsync(cancellationToken));
 
         var tsb = new TerminalStringBuilder();

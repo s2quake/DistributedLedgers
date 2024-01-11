@@ -12,7 +12,7 @@ partial class Algorithm_4_21Command
         Task ProposeAsync(bool value, int round, CancellationToken cancellationToken);
     }
 
-    sealed class ServerNodeService : ServerServiceHost<INodeService>, INodeService
+    sealed class NodeServerService : ServerServiceHost<INodeService>, INodeService
     {
         private readonly ConcurrentDictionary<int, ConcurrentBag<bool>> _proposesByRound = new();
 
@@ -35,7 +35,7 @@ partial class Algorithm_4_21Command
         }
     }
 
-    sealed class ClientNodeService : ClientServiceHost<INodeService>
+    sealed class NodeClientService : ClientServiceHost<INodeService>
     {
         public async void Propose(bool value, int round)
         {
@@ -43,7 +43,7 @@ partial class Algorithm_4_21Command
         }
     }
 
-    sealed class Node : NodeBase<ServerNodeService, ClientNodeService>
+    sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
     {
         public bool Value { get; private set; }
 
@@ -53,7 +53,7 @@ partial class Algorithm_4_21Command
             var r = 1;
             var nodeIndex = Index;
             var decided = false;
-            Broadcast(item => item.Propose(x, r));
+            Broadcast((_, service) => service.Propose(x, r));
             do
             {
                 Console.WriteLine($"{this}: round {r}, value => {x}");
@@ -75,7 +75,7 @@ partial class Algorithm_4_21Command
                     x = Random.Shared.Next() % 2 == 0;
                 }
                 r++;
-                Broadcast(item => item.Propose(x, r));
+                Broadcast((_, service) => service.Propose(x, r));
             } while (decided != true);
             Value = x;
         }

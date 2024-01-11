@@ -37,7 +37,7 @@ partial class Algorithm_6_2Command
         }
     }
 
-    sealed class Node : NodeBase<ServerNodeService, ClientNodeService>
+    sealed class Node : NodeBase<Node, ServerNodeService, ClientNodeService>
     {
         public bool Value { get; private set; }
 
@@ -56,7 +56,7 @@ partial class Algorithm_6_2Command
                 if (s.Count >= i && s.ContainsKey(p) == true && s[p] == true)
                 {
                     var b1 = IsByzantine == true ? false : true;
-                    Broadcast(item => item.Value(nodeIndex, b1));
+                    Broadcast((_, service) => service.Value(nodeIndex, b1));
                     Value = true;
                     return;
                 }
@@ -70,7 +70,7 @@ partial class Algorithm_6_2Command
             if (b == true)
             {
                 var b1 = IsByzantine != true || !b;
-                Broadcast(item => item.Value(nodeIndex, b1));
+                Broadcast((_, service) => service.Value(nodeIndex, b1));
                 Value = true;
             }
             else
