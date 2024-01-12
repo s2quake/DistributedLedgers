@@ -14,7 +14,7 @@ partial class Algorithm_2_12Command
         private bool[] _ready = [];
         private string _name = string.Empty;
 
-        public static async Task<Client> CreateAsync(string name, DnsEndPoint[] serverEndPoints, CancellationToken cancellationToken)
+        public static async Task<Client> CreateAsync(string name, EndPoint[] serverEndPoints, CancellationToken cancellationToken)
         {
             var senders = new Common.Client[serverEndPoints.Length];
             var senderServices = new ClientMessageService[serverEndPoints.Length];

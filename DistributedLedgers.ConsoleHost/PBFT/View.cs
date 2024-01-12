@@ -1,11 +1,12 @@
+using System.Net;
 using JSSoft.Terminals;
 
 namespace DistributedLedgers.ConsoleHost.PBFT;
 
-sealed class View(int v, int n, int f, Node node)
+sealed class View(int v, EndPoint[] endPoints, int f, Node node)
 {
     private readonly int _v = v;
-    private readonly int _n = n;
+    private readonly EndPoint[] _endPoints = endPoints;
     private readonly int _f = f;
     private readonly int _ni = node.Index;
     private readonly Node _node = node;
@@ -13,6 +14,7 @@ sealed class View(int v, int n, int f, Node node)
     private readonly PrePrepareMessageCollection _prePrepareMessages = [];
     private readonly PrepareMessageCollection _prepareMessages = [];
     private readonly CommitMessageCollection _commitMessages = [];
+    private readonly EndPoint _primaryEndPoint = endPoints[v % endPoints.Length];
     private int _s;
     private Timer? _timer;
 
@@ -28,7 +30,7 @@ sealed class View(int v, int n, int f, Node node)
     public void RequestFromClient(int r, int c)
     {
         // Console.WriteLine($"{this} Request: r={r}, c={c}");
-        var isPrimary = _v % _n == _ni;
+        var isPrimary = _v % _endPoints.Length == _ni;
         var ni = _ni;
 
         var s = Interlocked.Increment(ref _s);
@@ -39,8 +41,7 @@ sealed class View(int v, int n, int f, Node node)
         }
         else
         {
-            // var primaryNode = _node.Nodes.First(item => item.Index == _v);
-            // _node.SendRequest(primaryNode, r, c, ni);
+            _node.SendRequest(_primaryEndPoint, r, c, ni);
         }
     }
 
@@ -56,7 +57,7 @@ sealed class View(int v, int n, int f, Node node)
         if (_ni == _v)
             throw new InvalidOperationException();
 
-        if (p == (_v % _n) && _prePrepareMessages.Add(v: v, s: s, r: r, p: p) == true)
+        if (p == (_v % _endPoints.Length) && _prePrepareMessages.Add(v: v, s: s, r: r, p: p) == true)
         {
             _prepareMessages.Add(v: v, s: s, r: r);
             _node.BroadcastPrepare(v, s, r, b: _ni);

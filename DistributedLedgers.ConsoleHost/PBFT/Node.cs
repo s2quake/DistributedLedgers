@@ -1,3 +1,4 @@
+using System.Net;
 using DistributedLedgers.ConsoleHost.Common;
 
 namespace DistributedLedgers.ConsoleHost.PBFT;
@@ -11,15 +12,15 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
     private readonly List<(int r, int c)> _replyMessageList = [];
     private bool _isEnd;
     private int _f;
-    private int _n;
+    private EndPoint[] _endPoints = [];
 
     public (int r, int c)[] Value => [.. _replyMessageList.OrderBy(item => item.c)];
 
-    public void Initialize(int n, int f)
+    public void Initialize(EndPoint[] endPoints, int f)
     {
-        _n = n;
+        _endPoints = endPoints;
         _f = f;
-        _view = new View(v: 0, n, f, this);
+        _view = new View(v: 0, endPoints, f, this);
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -79,7 +80,7 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
         {
             _viewByIndex.Add(_view.Index, _view);
         }
-        _view = new View(v, _n, _f, this);
+        _view = new View(v, _endPoints, _f, this);
         _view.ViewChange(Pb);
     }
 
@@ -140,7 +141,7 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
         });
     }
 
-    internal void SendRequest(Node receiverNode, int r, int c, int ni)
+    internal void SendRequest(EndPoint endPoint, int r, int c, int ni)
     {
         // var service = GetClientService(receiverNode);
         // await service.Request(r, c, ni, cancellationToken);

@@ -35,7 +35,7 @@ sealed partial class Algorithm_3_15Command : CommandAsyncBase
         await Out.WriteAsync(tsb.ToString());
     }
 
-    private static async ValueTask AttachNodesAsync(Node node, IEnumerable<DnsEndPoint> endPoints, CancellationToken cancellationToken)
+    private static async ValueTask AttachNodesAsync(Node node, IEnumerable<EndPoint> endPoints, CancellationToken cancellationToken)
     {
         var others = endPoints.Where(item => item != node.EndPoint);
         await Parallel.ForEachAsync(others, cancellationToken, node.AddNodeAsync);

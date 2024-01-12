@@ -8,51 +8,51 @@ partial class Algorithm_3_22Command
     public interface INodeService
     {
         [ServerMethod]
-        Task ProposeAsync(int nodeId, bool? v, int round, CancellationToken cancellationToken);
+        Task ProposeAsync(string nodeId, bool? v, int round, CancellationToken cancellationToken);
 
         [ServerMethod]
-        Task MyValueAsync(int nodeId, bool v, int round, CancellationToken cancellationToken);
+        Task MyValueAsync(string nodeId, bool v, int round, CancellationToken cancellationToken);
 
         [ServerMethod]
-        Task MyCoinAsync(int nodeId, bool c, CancellationToken cancellationToken);
+        Task MyCoinAsync(string nodeId, bool c, CancellationToken cancellationToken);
 
         [ServerMethod]
-        Task MySetAsync(int nodeId, bool[] cu, CancellationToken cancellationToken);
+        Task MySetAsync(string nodeId, bool[] cu, CancellationToken cancellationToken);
     }
 
     sealed class ServerNodeService(string name) : ServerService<INodeService>, INodeService
     {
         private readonly string _name = name;
-        private readonly ConcurrentDictionary<int, ConcurrentDictionary<int, bool>> _valuesByRound = new();
-        private readonly ConcurrentDictionary<int, ConcurrentDictionary<int, bool?>> _proposesByRound = new();
-        private readonly ConcurrentDictionary<int, bool> _coinByNode = new();
-        private readonly ConcurrentDictionary<int, bool[]> _setByNode = new();
+        private readonly ConcurrentDictionary<int, ConcurrentDictionary<string, bool>> _valuesByRound = new();
+        private readonly ConcurrentDictionary<int, ConcurrentDictionary<string, bool?>> _proposesByRound = new();
+        private readonly ConcurrentDictionary<string, bool> _coinByNode = new();
+        private readonly ConcurrentDictionary<string, bool[]> _setByNode = new();
 
-        public async Task ProposeAsync(int nodeId, bool? v, int round, CancellationToken cancellationToken)
+        public async Task ProposeAsync(string nodeId, bool? v, int round, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
-            if (_proposesByRound.GetOrAdd(round, new ConcurrentDictionary<int, bool?>()) is { } proposes)
+            if (_proposesByRound.GetOrAdd(round, new ConcurrentDictionary<string, bool?>()) is { } proposes)
             {
                 proposes.AddOrUpdate(nodeId, v, (key, oldValue) => v);
             }
         }
 
-        public async Task MyValueAsync(int nodeId, bool v, int round, CancellationToken cancellationToken)
+        public async Task MyValueAsync(string nodeId, bool v, int round, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
-            if (_valuesByRound.GetOrAdd(round, new ConcurrentDictionary<int, bool>()) is { } values)
+            if (_valuesByRound.GetOrAdd(round, new ConcurrentDictionary<string, bool>()) is { } values)
             {
                 values.AddOrUpdate(nodeId, v, (key, oldValue) => v);
             }
         }
 
-        public async Task MyCoinAsync(int nodeId, bool c, CancellationToken cancellationToken)
+        public async Task MyCoinAsync(string nodeId, bool c, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             _coinByNode.AddOrUpdate(nodeId, c, (key, value) => c);
         }
 
-        public async Task MySetAsync(int nodeId, bool[] cu, CancellationToken cancellationToken)
+        public async Task MySetAsync(string nodeId, bool[] cu, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             _setByNode.AddOrUpdate(nodeId, cu, (key, value) => cu);
@@ -121,22 +121,22 @@ partial class Algorithm_3_22Command
     {
         private readonly string _name = name;
 
-        public async void BroadcastMyValue(int nodeId, bool v, int round)
+        public async void BroadcastMyValue(string nodeId, bool v, int round)
         {
             await Server.MyValueAsync(nodeId, v, round, CancellationToken.None);
         }
 
-        public async void BroadcastPropose(int nodeId, bool? v, int round)
+        public async void BroadcastPropose(string nodeId, bool? v, int round)
         {
             await Server.ProposeAsync(nodeId, v, round, CancellationToken.None);
         }
 
-        public async void BroadcastMyCoin(int nodeId, bool c)
+        public async void BroadcastMyCoin(string nodeId, bool c)
         {
             await Server.MyCoinAsync(nodeId, c, CancellationToken.None);
         }
 
-        public async void BroadcastMySet(int nodeId, bool[] cu)
+        public async void BroadcastMySet(string nodeId, bool[] cu)
         {
             await Server.MySetAsync(nodeId, cu, CancellationToken.None);
         }

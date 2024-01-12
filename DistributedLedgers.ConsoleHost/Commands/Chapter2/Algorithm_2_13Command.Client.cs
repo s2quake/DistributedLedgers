@@ -13,7 +13,7 @@ partial class Algorithm_2_13Command
         private bool[] _ready = [];
         private string _name = string.Empty;
 
-        public static async Task<Client> CreateAsync(string name, DnsEndPoint[] serverEndPoints, CancellationToken cancellationToken)
+        public static async Task<Client> CreateAsync(string name, EndPoint[] serverEndPoints, CancellationToken cancellationToken)
         {
             var senderServices = new ClientMessageService[serverEndPoints.Length];
             for (var i = 0; i < serverEndPoints.Length; i++)
@@ -31,7 +31,7 @@ partial class Algorithm_2_13Command
             };
         }
 
-        public static async Task<AsyncDisposableCollection<Client>> CreateManyAsync(int count, DnsEndPoint[] serverEndPoints, CancellationToken cancellationToken)
+        public static async Task<AsyncDisposableCollection<Client>> CreateManyAsync(int count, EndPoint[] serverEndPoints, CancellationToken cancellationToken)
         {
             var tasks = new Task<Client>[count];
             for (var i = 0; i < tasks.Length; i++)

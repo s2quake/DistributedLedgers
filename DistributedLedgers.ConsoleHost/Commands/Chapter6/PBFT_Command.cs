@@ -30,7 +30,7 @@ sealed partial class PBFT_Command : CommandAsyncBase
         var endPoints = PortUtility.GetEndPoints(n);
         await using var nodes = await PBFT.Node.CreateManyAsync(endPoints, f, cancellationToken);
         await Out.WriteLineAsync("============ agreement ============");
-        Parallel.ForEach(nodes, item => item.Initialize(n, f));
+        Parallel.ForEach(nodes, item => item.Initialize(endPoints, f));
         for (var c = 0; c < 10; c++)
         {
             var r = Random.Shared.Next();

@@ -11,7 +11,7 @@ partial class Algorithm_2_10Command
         private IMessageService[] _senderServices = [];
         private int?[] _locks = [];
 
-        public static async Task<Client> CreateAsync(DnsEndPoint[] endPoints, CancellationToken cancellationToken)
+        public static async Task<Client> CreateAsync(EndPoint[] endPoints, CancellationToken cancellationToken)
         {
             var senders = new Common.Client[endPoints.Length];
             var senderServices = new ClientMessageService[endPoints.Length];

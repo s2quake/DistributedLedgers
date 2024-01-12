@@ -8,31 +8,31 @@ partial class Algorithm_3_15Command
     public interface INodeService
     {
         [ServerMethod]
-        Task ProposeAsync(int nodeId, bool? v, int round, CancellationToken cancellationToken);
+        Task ProposeAsync(string nodeId, bool? v, int round, CancellationToken cancellationToken);
 
         [ServerMethod]
-        Task MyValueAsync(int nodeId, bool v, int round, CancellationToken cancellationToken);
+        Task MyValueAsync(string nodeId, bool v, int round, CancellationToken cancellationToken);
     }
 
     sealed class ServerNodeService(string name) : ServerService<INodeService>, INodeService
     {
         private readonly string _name = name;
-        private readonly ConcurrentDictionary<int, ConcurrentDictionary<int, bool>> _valuesByRound = new();
-        private readonly ConcurrentDictionary<int, ConcurrentDictionary<int, bool?>> _proposesByRound = new();
+        private readonly ConcurrentDictionary<int, ConcurrentDictionary<string, bool>> _valuesByRound = new();
+        private readonly ConcurrentDictionary<int, ConcurrentDictionary<string, bool?>> _proposesByRound = new();
 
-        public async Task ProposeAsync(int nodeId, bool? v, int round, CancellationToken cancellationToken)
+        public async Task ProposeAsync(string nodeId, bool? v, int round, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
-            if (_proposesByRound.GetOrAdd(round, new ConcurrentDictionary<int, bool?>()) is { } proposes)
+            if (_proposesByRound.GetOrAdd(round, new ConcurrentDictionary<string, bool?>()) is { } proposes)
             {
                 proposes.AddOrUpdate(nodeId, v, (key, oldValue) => v);
             }
         }
 
-        public async Task MyValueAsync(int nodeId, bool v, int round, CancellationToken cancellationToken)
+        public async Task MyValueAsync(string nodeId, bool v, int round, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
-            if (_valuesByRound.GetOrAdd(round, new ConcurrentDictionary<int, bool>()) is { } values)
+            if (_valuesByRound.GetOrAdd(round, new ConcurrentDictionary<string, bool>()) is { } values)
             {
                 values.AddOrUpdate(nodeId, v, (key, oldValue) => v);
             }
@@ -69,12 +69,12 @@ partial class Algorithm_3_15Command
     {
         private readonly string _name = name;
 
-        public async void BroadcastMyValue(int nodeId, bool v, int round)
+        public async void BroadcastMyValue(string nodeId, bool v, int round)
         {
             await Server.MyValueAsync(nodeId, v, round, CancellationToken.None);
         }
 
-        public async void BroadcastPropose(int nodeId, bool? v, int round)
+        public async void BroadcastPropose(string nodeId, bool? v, int round)
         {
             await Server.ProposeAsync(nodeId, v, round, CancellationToken.None);
         }

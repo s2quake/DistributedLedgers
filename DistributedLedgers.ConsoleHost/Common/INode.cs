@@ -5,7 +5,7 @@ namespace DistributedLedgers.ConsoleHost.Common;
 
 interface INode
 {
-    DnsEndPoint EndPoint { get; }
+    EndPoint EndPoint { get; }
 
     IReadOnlyList<INode> Nodes { get; }
 }

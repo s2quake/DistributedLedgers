@@ -20,16 +20,16 @@ partial class Algorithm_3_22Command
 
         public bool? Value { get; private set; }
 
-        public DnsEndPoint EndPoint => _server.EndPoint;
+        public EndPoint EndPoint => _server.EndPoint;
 
-        public static async Task<Node> CreateAsync(DnsEndPoint endPoint, CancellationToken cancellationToken)
+        public static async Task<Node> CreateAsync(EndPoint endPoint, CancellationToken cancellationToken)
         {
             var service = new ServerNodeService($"server: {endPoint}");
             var server = await Server.CreateAsync(endPoint, service, cancellationToken);
             return new Node(server, service);
         }
 
-        public async ValueTask AddNodeAsync(DnsEndPoint endPoint, CancellationToken cancellationToken)
+        public async ValueTask AddNodeAsync(EndPoint endPoint, CancellationToken cancellationToken)
         {
             var clientService = new ClientNodeService($"client: {endPoint}");
             var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
@@ -114,22 +114,22 @@ partial class Algorithm_3_22Command
 
         private void BroadcastPropose(bool? v, int round)
         {
-            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastPropose(_server.EndPoint.Port, v, round));
+            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastPropose($"{_server.EndPoint}", v, round));
         }
 
         private void BroadcastMyValue(bool v, int round)
         {
-            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMyValue(_server.EndPoint.Port, v, round));
+            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMyValue($"{_server.EndPoint}", v, round));
         }
 
         private void BroadcastMyCoin(bool c)
         {
-            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMyCoin(_server.EndPoint.Port, c));
+            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMyCoin($"{_server.EndPoint}", c));
         }
 
         private void BroadcastMySet(bool[] cu)
         {
-            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMySet(_server.EndPoint.Port, cu));
+            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMySet($"{_server.EndPoint}", cu));
         }
     }
 }

@@ -12,9 +12,9 @@ sealed class Server : ServerContext, IAsyncDisposable
     {
     }
 
-    public static Task<Server> CreateAsync(IService service, CancellationToken cancellationToken) => CreateAsync(new(DefaultHost, DefaultPort), service, cancellationToken);
+    public static Task<Server> CreateAsync(IService service, CancellationToken cancellationToken) => CreateAsync(new DnsEndPoint(DefaultHost, DefaultPort), service, cancellationToken);
 
-    public static async Task<Server> CreateAsync(DnsEndPoint endPoint, IService service, CancellationToken cancellationToken)
+    public static async Task<Server> CreateAsync(EndPoint endPoint, IService service, CancellationToken cancellationToken)
     {
         var server = new Server([service])
         {
@@ -24,7 +24,7 @@ sealed class Server : ServerContext, IAsyncDisposable
         return server;
     }
 
-    public static async Task<AsyncDisposableCollection<Server>> CreateManyAsync(DnsEndPoint[] endPoints, IService[] services, CancellationToken cancellationToken)
+    public static async Task<AsyncDisposableCollection<Server>> CreateManyAsync(EndPoint[] endPoints, IService[] services, CancellationToken cancellationToken)
     {
         var tasks = new Task<Server>[endPoints.Length];
         for (var i = 0; i < tasks.Length; i++)

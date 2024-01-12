@@ -8,30 +8,30 @@ partial class Algorithm_4_9Command
     public interface INodeService
     {
         [ServerMethod]
-        Task SendAsync(int nodeId, int value, CancellationToken cancellationToken);
+        Task SendAsync(string nodeId, int value, CancellationToken cancellationToken);
 
         [ServerMethod]
-        Task SendManyAsync((int nodeId, int value)[] values, CancellationToken cancellationToken);
+        Task SendManyAsync((string nodeId, int value)[] values, CancellationToken cancellationToken);
     }
 
     sealed class ServerNodeService : ServerService<INodeService>, INodeService
     {
-        private readonly ConcurrentDictionary<int, int> _valueByNode = new();
-        private readonly ConcurrentBag<(int nodeId, int value)[]> _values = [];
+        private readonly ConcurrentDictionary<string, int> _valueByNode = new();
+        private readonly ConcurrentBag<(string nodeId, int value)[]> _values = [];
 
-        public async Task SendAsync(int nodeId, int value, CancellationToken cancellationToken)
+        public async Task SendAsync(string nodeId, int value, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             _valueByNode.AddOrUpdate(nodeId, value, (k, v) => value);
         }
 
-        public async Task SendManyAsync((int nodeId, int value)[] values, CancellationToken cancellationToken)
+        public async Task SendManyAsync((string nodeId, int value)[] values, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             _values.Add(values);
         }
 
-        public async Task<(int nodeId, int value)[]> WaitForValueAsync(int count, CancellationToken cancellationToken)
+        public async Task<(string nodeId, int value)[]> WaitForValueAsync(int count, CancellationToken cancellationToken)
         {
             while (cancellationToken.IsCancellationRequested != true)
             {
@@ -44,7 +44,7 @@ partial class Algorithm_4_9Command
             throw new NotImplementedException();
         }
 
-        public async Task<(int nodeId, int value)[]> WaitForValuesAsync(int count, CancellationToken cancellationToken)
+        public async Task<(string nodeId, int value)[]> WaitForValuesAsync(int count, CancellationToken cancellationToken)
         {
             while (cancellationToken.IsCancellationRequested != true)
             {
@@ -60,12 +60,12 @@ partial class Algorithm_4_9Command
 
     sealed class ClientNodeService : ClientService<INodeService>
     {
-        public async void SendValue(int nodeId, int value)
+        public async void SendValue(string nodeId, int value)
         {
             await Server.SendAsync(nodeId, value, CancellationToken.None);
         }
 
-        public async void SendMany((int nodeId, int value)[] values)
+        public async void SendMany((string nodeId, int value)[] values)
         {
             await Server.SendManyAsync(values, CancellationToken.None);
         }

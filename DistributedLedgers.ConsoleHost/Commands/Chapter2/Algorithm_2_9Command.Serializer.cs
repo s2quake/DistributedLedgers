@@ -11,7 +11,7 @@ partial class Algorithm_2_9Command
         private Client[] _senders = [];
         private Server? _receiver;
 
-        public static async Task<Serializer> CreateAsync(DnsEndPoint endPoint, DnsEndPoint[] serverEndPoints, CancellationToken cancellationToken)
+        public static async Task<Serializer> CreateAsync(EndPoint endPoint, EndPoint[] serverEndPoints, CancellationToken cancellationToken)
         {
             var senders = new Client[serverEndPoints.Length];
             var senderServices = new SerializerSendService[serverEndPoints.Length];

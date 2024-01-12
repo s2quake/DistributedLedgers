@@ -35,24 +35,24 @@ static class PortUtility
         return ports;
     }
 
-    public static DnsEndPoint GetEndPoint()
+    public static EndPoint GetEndPoint()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
-        return new(ServiceContextBase.DefaultHost, ((IPEndPoint)listener.LocalEndpoint).Port);
+        return new DnsEndPoint(ServiceContextBase.DefaultHost, ((IPEndPoint)listener.LocalEndpoint).Port);
     }
 
-    public static DnsEndPoint[] GetEndPoints(int count)
+    public static EndPoint[] GetEndPoints(int count)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(count);
 
         var listeners = new TcpListener[count];
-        var endPoints = new DnsEndPoint[count];
+        var endPoints = new EndPoint[count];
         for (var i = 0; i < endPoints.Length; i++)
         {
             listeners[i] = new(IPAddress.Loopback, 0);
             listeners[i].Start();
-            endPoints[i] = new(ServiceContextBase.DefaultHost, ((IPEndPoint)listeners[i].LocalEndpoint).Port);
+            endPoints[i] = new DnsEndPoint(ServiceContextBase.DefaultHost, ((IPEndPoint)listeners[i].LocalEndpoint).Port);
         }
         for (var i = 0; i < listeners.Length; i++)
         {
