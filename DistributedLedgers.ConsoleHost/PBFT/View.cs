@@ -1,24 +1,40 @@
 using System.Net;
+using JSSoft.Communication.Threading;
 using JSSoft.Terminals;
 
 namespace DistributedLedgers.ConsoleHost.PBFT;
 
-sealed class View(int v, EndPoint[] endPoints, int f, Node node)
+sealed class View : IDisposable
 {
-    private readonly int _v = v;
-    private readonly EndPoint[] _endPoints = endPoints;
-    private readonly int _f = f;
-    private readonly int _ni = node.Index;
-    private readonly Node _node = node;
+    private readonly int _v;
+    private readonly EndPoint[] _endPoints;
+    private readonly int _f;
+    private readonly int _ni;
+    private readonly Node _node;
     private readonly RequestMessageCollection _requestMessages = [];
     private readonly PrePrepareMessageCollection _prePrepareMessages = [];
     private readonly PrepareMessageCollection _prepareMessages = [];
     private readonly CommitMessageCollection _commitMessages = [];
-    private readonly EndPoint _primaryEndPoint = endPoints[v % endPoints.Length];
+    private readonly EndPoint _primaryEndPoint;
+    private readonly Dispatcher _dispatcher;
+    private bool _isDisposed;
     private int _s;
     private Timer? _timer;
 
+    public View(int v, EndPoint[] endPoints, int f, Node node)
+    {
+        _v = v;
+        _endPoints = endPoints;
+        _f = f;
+        _ni = node.Index;
+        _node = node;
+        _primaryEndPoint = endPoints[v % endPoints.Length];
+        _dispatcher = new(this);
+    }
+
     public int Index => _v;
+
+    public Dispatcher Dispatcher => _dispatcher;
 
     public override string ToString()
     {
@@ -29,6 +45,7 @@ sealed class View(int v, EndPoint[] endPoints, int f, Node node)
 
     public void RequestFromClient(int r, int c)
     {
+        _dispatcher.VerifyAccess();
         // Console.WriteLine($"{this} Request: r={r}, c={c}");
         var isPrimary = _v % _endPoints.Length == _ni;
         var ni = _ni;
@@ -53,6 +70,7 @@ sealed class View(int v, EndPoint[] endPoints, int f, Node node)
 
     public void PrePrepare(int v, int s, int r, int p)
     {
+        _dispatcher.VerifyAccess();
         // Console.WriteLine($"{this} PrePrepare: v={v}, s={s}, r={r}, p={p}");
         if (_ni == _v)
             throw new InvalidOperationException();
@@ -66,6 +84,7 @@ sealed class View(int v, EndPoint[] endPoints, int f, Node node)
 
     public void Prepare(int v, int s, int r, int ni)
     {
+        _dispatcher.VerifyAccess();
         // Console.WriteLine($"{this} Prepare: v={v}, s={s}, r={r}, n={n}");
         var minimum = 2 * _f;
 
@@ -78,6 +97,7 @@ sealed class View(int v, EndPoint[] endPoints, int f, Node node)
 
     public void Commit(int v, int s, int ni)
     {
+        _dispatcher.VerifyAccess();
         // Console.WriteLine($"{this} Commit: v={v}, s={s}, n={n}");
         var minimum = 2 * _f + 1;
 
@@ -95,6 +115,16 @@ sealed class View(int v, EndPoint[] endPoints, int f, Node node)
 
     public void ViewChange((int s, int r)[] Pb)
     {
+        _dispatcher.VerifyAccess();
         _prepareMessages.AddRange(_v, Pb);
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed == true)
+            throw new ObjectDisposedException($"{this}");
+
+        _dispatcher.Dispose();
+        _isDisposed = true;
     }
 }

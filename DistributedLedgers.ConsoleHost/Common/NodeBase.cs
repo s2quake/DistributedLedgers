@@ -11,19 +11,17 @@ abstract class NodeBase<T, TServerService, TClientService>
 {
     private readonly List<Client> _clientList = [];
     private readonly Dictionary<EndPoint, TClientService> _clientServiceByEndPoint = [];
-    private readonly List<TClientService> _nodeList = [];
+    private readonly List<EndPoint> _nodeList = [];
     private Server? _server;
     private TServerService? _serverService;
     private int _index = -1;
     private bool _isByzantine;
 
-    // public int Port => _server?.Port ?? throw new InvalidOperationException();
-
     public EndPoint EndPoint => _server?.EndPoint ?? throw new InvalidOperationException();
 
     public int Index => _index;
 
-    public IReadOnlyList<TClientService> Nodes => _nodeList;
+    public IReadOnlyList<EndPoint> Nodes => _nodeList;
 
     public bool IsByzantine => _isByzantine;
 
@@ -80,12 +78,13 @@ abstract class NodeBase<T, TServerService, TClientService>
         {
             _clientList.Add(client);
             _clientServiceByEndPoint.Add(endPoint, clientService);
-            _nodeList.Add(clientService);
+            _nodeList.Add(endPoint);
         }
     }
 
     public async ValueTask DisposeAsync()
     {
+        await OnDisposeAsync();
         await Parallel.ForEachAsync(_clientList, (item, _) => item.DisposeAsync());
         if (_server != null)
             await _server.DisposeAsync();
@@ -93,6 +92,8 @@ abstract class NodeBase<T, TServerService, TClientService>
         _serverService = null;
         Console.WriteLine($"{this}: has been destroyed.");
     }
+
+    public TClientService GetClientService(EndPoint endPoint) => _clientServiceByEndPoint[endPoint];
 
     public override string ToString()
     {
@@ -115,13 +116,13 @@ abstract class NodeBase<T, TServerService, TClientService>
         action.Invoke(_clientServiceByEndPoint[endPoint]);
     }
 
-    protected TClientService GetClientService(EndPoint endPoint) => _clientServiceByEndPoint[endPoint];
-
     protected virtual TServerService CreateServerService()
         => (TServerService)Activator.CreateInstance(typeof(TServerService))!;
 
     protected virtual TClientService CreateClientService()
         => (TClientService)Activator.CreateInstance(typeof(TClientService))!;
+
+    protected virtual ValueTask OnDisposeAsync() => ValueTask.CompletedTask;
 
     private static async Task AttachNodesAsync(T node, IEnumerable<EndPoint> endPoints, CancellationToken cancellationToken)
     {

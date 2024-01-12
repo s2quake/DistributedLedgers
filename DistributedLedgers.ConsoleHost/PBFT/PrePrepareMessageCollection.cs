@@ -10,15 +10,12 @@ sealed class PrePrepareMessageCollection : IEnumerable<PrePrepareMessage>
 
     public bool Add(int v, int s, int r, int p)
     {
-        lock (_itemList)
+        if (_itemList.Any(Compare) == false)
         {
-            if (_itemList.Any(Compare) == false)
-            {
-                _itemList.Add(new(V: v, S: s, R: r, P: p));
-                return true;
-            }
-            return false;
+            _itemList.Add(new(V: v, S: s, R: r, P: p));
+            return true;
         }
+        return false;
 
         bool Compare(PrePrepareMessage item)
         {
@@ -28,7 +25,7 @@ sealed class PrePrepareMessageCollection : IEnumerable<PrePrepareMessage>
 
     // public PrePrepareMessage[] Prepare(int s)
     // {
-    //     lock (_itemList)
+    //     // lock (_itemList)
     //     {
     //         var itemList = new List<PrePrepareMessage>(_itemList.Count);
     //         for (var i = _itemList.Count - 1; i >= 0; i--)

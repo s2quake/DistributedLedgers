@@ -10,28 +10,22 @@ sealed class RequestMessageCollection : IEnumerable<RequestMessage>
 
     public void Add(int r, int c, int s)
     {
-        lock (_itemList)
-        {
-            _itemList.Add(new(R: r, C: c, S: s));
-        }
+        _itemList.Add(new(R: r, C: c, S: s));
     }
 
     public RequestMessage[] Remove(int s)
     {
-        lock (_itemList)
+        var itemList = new List<RequestMessage>(_itemList.Count);
+        for (var i = _itemList.Count - 1; i >= 0; i--)
         {
-            var itemList = new List<RequestMessage>(_itemList.Count);
-            for (var i = _itemList.Count - 1; i >= 0; i--)
+            var item = _itemList[i];
+            if (item.S <= s)
             {
-                var item = _itemList[i];
-                if (item.S <= s)
-                {
-                    _itemList.RemoveAt(i);
-                    itemList.Add(item);
-                }
+                _itemList.RemoveAt(i);
+                itemList.Add(item);
             }
-            return [.. itemList.OrderBy(item => item.S)];
         }
+        return [.. itemList.OrderBy(item => item.S)];
     }
 
     #region IEnumerable

@@ -10,45 +10,33 @@ sealed class PrepareMessageCollection : IEnumerable<PrepareMessage>
 
     public void Add(int v, int s, int r)
     {
-        lock (_itemList)
-        {
-            _itemList.Add(new(V: v, S: s, R: r));
-        }
+        _itemList.Add(new(V: v, S: s, R: r));
     }
 
     public bool CanCommit(int v, int s, int r, int minimum)
     {
-        lock (_itemList)
+        _itemList.Add(new(V: v, S: s, R: r));
+        if (_itemList.Where(Compare).Count() >= minimum)
         {
-            _itemList.Add(new(V: v, S: s, R: r));
-            if (_itemList.Where(Compare).Count() >= minimum)
-            {
-                _itemList.RemoveAll(Compare);
-                return true;
-            }
-            return false;
+            _itemList.RemoveAll(Compare);
+            return true;
         }
+        return false;
 
         bool Compare(PrepareMessage item) => item.V == v && item.S == s && item.R == r;
     }
 
     public (int r, int s)[] Collect()
     {
-        lock (_itemList)
-        {
-            return [.. _itemList.Select(item => (item.R, item.S))];
-        }
+        return [.. _itemList.Select(item => (item.R, item.S))];
     }
 
     public void AddRange(int v, (int r, int s)[] Pb)
     {
-        lock (_itemList)
+        for (var i = 0; i < Pb.Length; i++)
         {
-            for (var i = 0; i < Pb.Length; i++)
-            {
-                var (r, s) = Pb[i];
-                _itemList.Add(new(V: v, S: s, R: r));
-            }
+            var (r, s) = Pb[i];
+            _itemList.Add(new(V: v, S: s, R: r));
         }
     }
 

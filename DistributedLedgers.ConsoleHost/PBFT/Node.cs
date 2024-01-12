@@ -7,9 +7,9 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
 {
     private readonly object _lockObject = new();
     private readonly Dictionary<int, View> _viewByIndex = [];
-    private View? _view;
     private readonly List<(int r, int c)> _requestMessageList = [];
     private readonly List<(int r, int c)> _replyMessageList = [];
+    private View? _view;
     private bool _isEnd;
     private int _f;
     private EndPoint[] _endPoints = [];
@@ -38,11 +38,12 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
     {
         if (_view == null)
             throw new InvalidOperationException("Node is not initialized.");
+
         lock (_lockObject)
         {
             _requestMessageList.Add((r, c));
         }
-        _view.RequestFromClient(r, c);
+        _view.Dispatcher.InvokeAsync(() => _view.RequestFromClient(r, c));
     }
 
     internal async void OnRequest(int r, int c, int ni)
@@ -54,7 +55,7 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
     {
         if (_view is { } view && view.Index == v)
         {
-            view.PrePrepare(v, s, r, ni);
+            view.Dispatcher.InvokeAsync(() => view.PrePrepare(v, s, r, ni));
         }
     }
 
@@ -62,7 +63,7 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
     {
         if (_view is { } view && view.Index == v)
         {
-            view.Prepare(v, s, r, ni);
+            view.Dispatcher.InvokeAsync(() => view.Prepare(v, s, r, ni));
         }
     }
 
@@ -70,7 +71,7 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
     {
         if (_view is { } view && view.Index == v)
         {
-            view.Commit(v, s, ni);
+            view.Dispatcher.InvokeAsync(() => view.Commit(v, s, ni));
         }
     }
 
@@ -78,6 +79,7 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
     {
         if (_view != null)
         {
+            _view.Dispose();
             _viewByIndex.Add(_view.Index, _view);
         }
         _view = new View(v, _endPoints, _f, this);
@@ -164,4 +166,10 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
 
     protected override NodeServerService CreateServerService()
         => new(this);
+
+    protected override ValueTask OnDisposeAsync()
+    {
+        _view?.Dispose();
+        return base.OnDisposeAsync();
+    }
 }
