@@ -4,33 +4,33 @@ namespace DistributedLedgers.ConsoleHost.PBFT;
 
 sealed class NodeClientService : ClientService<INodeService>
 {
-    public async Task RequestAsync(int r, int c, int n, CancellationToken cancellationToken)
+    public void Request(int r, int c, int n)
     {
-        await Server.RequestAsync(r, c, n, cancellationToken);
+        Server.Request(r, c, n);
     }
 
-    public async void PrePrepare(int v, int s, int r, int p)
+    public void PrePrepare(int v, int s, int r, int p)
     {
-        await Server.PrePrepareAsync(v, s, r, p, CancellationToken.None);
+        Server.PrePrepare(v, s, r, p);
     }
 
-    public async void Prepare(int v, int s, int r, int b)
+    public void Prepare(int v, int s, int r, int b)
     {
-        await Server.PrepareAsync(v, s, r, b, CancellationToken.None);
+        Server.Prepare(v, s, r, b);
     }
 
-    public async void Commit(int v, int s, int ni)
+    public void Commit(int v, int s, int ni)
     {
-        await Server.CommitAsync(v, s, ni, CancellationToken.None);
+        Server.Commit(v, s, ni);
     }
 
-    public async void ViewChange(int v, (int s, int r)[] Pb, int b)
+    public void ViewChange(int v, (int s, int r)[] Pb, int b)
     {
-        await Server.ViewChangeAsync(v, Pb, b, CancellationToken.None);
+        Server.ViewChange(v, Pb, b);
     }
 
-    public async void NewView(int v, int p, int ni)
+    public void NewView(int v, int p, int ni)
     {
-        await Server.NewViewAsync(v, p, ni, CancellationToken.None);
+        Server.NewView(v, p, ni);
     }
 }

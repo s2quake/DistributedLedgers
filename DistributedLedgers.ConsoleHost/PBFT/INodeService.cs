@@ -4,21 +4,21 @@ namespace DistributedLedgers.ConsoleHost.PBFT;
 
 public interface INodeService
 {
-    [ServerMethod]
-    Task RequestAsync(int r, int c, int ni, CancellationToken cancellationToken);
+    [ServerMethod(IsOneWay = true)]
+    void Request(int r, int c, int ni);
 
-    [ServerMethod]
-    Task PrePrepareAsync(int v, int s, int r, int p, CancellationToken cancellationToken);
+    [ServerMethod(IsOneWay = true)]
+    void PrePrepare(int v, int s, int r, int p);
 
-    [ServerMethod]
-    Task PrepareAsync(int v, int s, int r, int b, CancellationToken cancellationToken);
+    [ServerMethod(IsOneWay = true)]
+    void Prepare(int v, int s, int r, int b);
 
-    [ServerMethod]
-    Task CommitAsync(int v, int s, int ni, CancellationToken cancellationToken);
+    [ServerMethod(IsOneWay = true)]
+    void Commit(int v, int s, int ni);
 
-    [ServerMethod]
-    Task ViewChangeAsync(int v, (int s, int r)[] Pb, int b, CancellationToken cancellationToken);
+    [ServerMethod(IsOneWay = true)]
+    void ViewChange(int v, (int s, int r)[] Pb, int b);
 
-    [ServerMethod]
-    Task NewViewAsync(int v, int p, int ni, CancellationToken cancellationToken);
+    [ServerMethod(IsOneWay = true)]
+    void NewView(int v, int p, int ni);
 }

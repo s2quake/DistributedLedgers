@@ -140,10 +140,10 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
         });
     }
 
-    internal async Task SendRequestAsync(Node receiverNode, int r, int c, int ni, CancellationToken cancellationToken)
+    internal void SendRequest(Node receiverNode, int r, int c, int ni)
     {
-        var service = GetClientService(receiverNode);
-        await service.RequestAsync(r, c, ni, cancellationToken);
+        // var service = GetClientService(receiverNode);
+        // await service.Request(r, c, ni, cancellationToken);
     }
 
     internal void ViewChange(int v)

@@ -24,7 +24,7 @@ sealed class View(int v, int n, int f, Node node)
         return $"{_node}";
     }
 
-    public async void RequestFromClient(int r, int c)
+    public void RequestFromClient(int r, int c)
     {
         // Console.WriteLine($"{this} Request: r={r}, c={c}");
         var isPrimary = _v % _n == _ni;
@@ -39,15 +39,16 @@ sealed class View(int v, int n, int f, Node node)
         else
         {
             var primaryNode = _node.Nodes.First(item => item.Index == _v);
-            try
-            {
-                await _node.SendRequestAsync(primaryNode, r, c, ni, CancellationToken.None);
-            }
-            catch (Exception)
-            {
-                var Pb = _prepareMessages.Collect();
-                _node.BroadcastViewChange(_v + 1, Pb, _ni);
-            }
+            _node.SendRequest(primaryNode, r, c, ni);
+            // try
+            // {
+            //     await _node.SendRequestAsync(primaryNode, r, c, ni, CancellationToken.None);
+            // }
+            // catch (Exception)
+            // {
+            //     var Pb = _prepareMessages.Collect();
+            //     _node.BroadcastViewChange(_v + 1, Pb, _ni);
+            // }
         }
     }
 
