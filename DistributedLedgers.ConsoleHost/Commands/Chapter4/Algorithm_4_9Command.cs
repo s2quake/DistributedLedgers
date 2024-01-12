@@ -9,7 +9,7 @@ namespace DistributedLedgers.ConsoleHost.Commands.Chapter4;
 sealed partial class Algorithm_4_9Command : CommandAsyncBase
 {
     public Algorithm_4_9Command()
-        : base("alg-4-9")
+        : base("algo-4-9")
     {
     }
 

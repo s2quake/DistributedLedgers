@@ -8,7 +8,7 @@ namespace DistributedLedgers.ConsoleHost.Commands.Chapter5;
 sealed class Algorithm_5_2Command : CommandBase
 {
     public Algorithm_5_2Command()
-        : base("alg-5-2")
+        : base("algo-5-2")
     {
     }
 

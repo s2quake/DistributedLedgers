@@ -8,7 +8,7 @@ namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 sealed partial class Algorithm_2_12Command : CommandAsyncBase
 {
     public Algorithm_2_12Command()
-        : base("alg-2-12")
+        : base("algo-2-12")
     {
     }
 

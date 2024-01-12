@@ -10,7 +10,7 @@ namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 sealed class Algorithm_2_3Command : CommandAsyncBase
 {
     public Algorithm_2_3Command()
-        : base("alg-2-3")
+        : base("algo-2-3")
     {
     }
 

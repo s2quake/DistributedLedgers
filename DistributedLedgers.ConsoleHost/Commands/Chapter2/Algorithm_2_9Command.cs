@@ -19,7 +19,7 @@ sealed partial class Algorithm_2_9Command : CommandAsyncBase
     ];
 
     public Algorithm_2_9Command()
-        : base("alg-2-9")
+        : base("algo-2-9")
     {
     }
 
