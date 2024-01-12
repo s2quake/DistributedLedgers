@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
 
@@ -8,17 +9,16 @@ partial class Algorithm_4_21Command
 {
     public interface INodeService
     {
-        [ServerMethod]
-        Task ProposeAsync(bool value, int round, CancellationToken cancellationToken);
+        [ServerMethod(IsOneWay = true)]
+        void Propose(bool value, int round);
     }
 
-    sealed class NodeServerService : ServerService<INodeService>, INodeService
+    sealed class ServerNodeService : ServerService<INodeService>, INodeService
     {
         private readonly ConcurrentDictionary<int, ConcurrentBag<bool>> _proposesByRound = new();
 
-        async Task INodeService.ProposeAsync(bool value, int round, CancellationToken cancellationToken)
+        void INodeService.Propose(bool value, int round)
         {
-            await Task.CompletedTask;
             var proposes = _proposesByRound.GetOrAdd(round, (r) => []);
             proposes.Add(value);
         }
@@ -35,16 +35,10 @@ partial class Algorithm_4_21Command
         }
     }
 
-    sealed class NodeClientService : ClientService<INodeService>
+    sealed class Node : NodeBase<Node, INodeService>
     {
-        public async void Propose(bool value, int round)
-        {
-            await Server.ProposeAsync(value, round, CancellationToken.None);
-        }
-    }
+        private readonly ServerNodeService _serverService = new();
 
-    sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
-    {
         public bool Value { get; private set; }
 
         public async Task RunAsync(bool x, int f, CancellationToken cancellationToken)
@@ -57,7 +51,7 @@ partial class Algorithm_4_21Command
             do
             {
                 Console.WriteLine($"{this}: round {r}, value => {x}");
-                var proposes = await ServerService.WaitForProposeAsync(r, n - f, cancellationToken);
+                var proposes = await _serverService.WaitForProposeAsync(r, n - f, cancellationToken);
                 var c1 = proposes.ToLookup(item => item).Where(item => item.Count() >= ((n / 2.0) + (3.0 * f) + 1));
                 var c2 = proposes.ToLookup(item => item).Where(item => item.Count() >= ((n / 2.0) + f + 1));
                 if (c1.Any() == true)
@@ -78,6 +72,18 @@ partial class Algorithm_4_21Command
                 Broadcast((_, service) => service.Propose(x, r));
             } while (decided != true);
             Value = x;
+        }
+
+        protected override async Task<(Client, INodeService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken)
+        {
+            var clientService = new ClientService<INodeService>();
+            var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
+            return (client, clientService.Server);
+        }
+
+        protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
+        {
+            return Server.CreateAsync(endPoint, _serverService, cancellationToken);
         }
     }
 }

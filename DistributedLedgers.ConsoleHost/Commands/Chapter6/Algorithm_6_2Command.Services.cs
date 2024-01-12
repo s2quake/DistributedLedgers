@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
 
@@ -8,17 +9,16 @@ partial class Algorithm_6_2Command
 {
     public interface INodeService
     {
-        [ServerMethod]
-        Task ValueAsync(int nodeIndex, bool value, CancellationToken cancellationToken);
+        [ServerMethod(IsOneWay = true)]
+        void Value(int nodeIndex, bool value);
     }
 
     sealed class ServerNodeService : ServerService<INodeService>, INodeService
     {
         private readonly ConcurrentDictionary<int, bool> _valueByNodeIndex = [];
 
-        async Task INodeService.ValueAsync(int nodeIndex, bool value, CancellationToken cancellationToken)
+        void INodeService.Value(int nodeIndex, bool value)
         {
-            await Task.CompletedTask;
             _valueByNodeIndex.AddOrUpdate(nodeIndex, value, (k, v) => value);
         }
 
@@ -29,16 +29,10 @@ partial class Algorithm_6_2Command
         }
     }
 
-    sealed class ClientNodeService : ClientService<INodeService>
+    sealed class Node : NodeBase<Node, INodeService>
     {
-        public async void Value(int nodeIndex, bool value)
-        {
-            await Server.ValueAsync(nodeIndex, value, CancellationToken.None);
-        }
-    }
+        private readonly ServerNodeService _serverService = new();
 
-    sealed class Node : NodeBase<Node, ServerNodeService, ClientNodeService>
-    {
         public bool Value { get; private set; }
 
         public async Task RunAsync(int p, int f, CancellationToken cancellationToken)
@@ -52,7 +46,7 @@ partial class Algorithm_6_2Command
 
             for (var i = 1; i <= f + 1; i++)
             {
-                var s = await ServerService.WaitForValueAsync(cancellationToken);
+                var s = await _serverService.WaitForValueAsync(cancellationToken);
                 if (s.Count >= i && s.ContainsKey(p) == true && s[p] == true)
                 {
                     var b1 = IsByzantine == true ? false : true;
@@ -61,6 +55,18 @@ partial class Algorithm_6_2Command
                     return;
                 }
             }
+        }
+
+        protected override async Task<(Client, INodeService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken)
+        {
+            var clientService = new ClientService<INodeService>();
+            var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
+            return (client, clientService.Server);
+        }
+
+        protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
+        {
+            return Server.CreateAsync(endPoint, _serverService, cancellationToken);
         }
 
         private async Task RunPrimaryAsync(CancellationToken cancellationToken)

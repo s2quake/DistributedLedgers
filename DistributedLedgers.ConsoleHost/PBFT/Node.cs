@@ -1,9 +1,10 @@
 using System.Net;
 using DistributedLedgers.ConsoleHost.Common;
+using JSSoft.Communication;
 
 namespace DistributedLedgers.ConsoleHost.PBFT;
 
-sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
+sealed class Node : NodeBase<Node, INodeService>, INodeService
 {
     private readonly object _lockObject = new();
     private readonly Dictionary<int, View> _viewByIndex = [];
@@ -164,12 +165,37 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
         }
     }
 
-    protected override NodeServerService CreateServerService()
-        => new(this);
+    protected override async Task<(Client, INodeService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken)
+    {
+        var clientService = new ClientService<INodeService>();
+        var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
+        return (client, clientService.Server);
+    }
+
+    protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
+    {
+        return Server.CreateAsync(endPoint, new ServerService<INodeService>(this), cancellationToken);
+    }
 
     protected override ValueTask OnDisposeAsync()
     {
         _view?.Dispose();
         return base.OnDisposeAsync();
     }
+
+    #region INodeService
+
+    void INodeService.Request(int r, int c, int ni) => OnRequest(r, c, ni);
+
+    void INodeService.PrePrepare(int v, int s, int r, int p) => OnPrePrepare(v, s, r, p);
+
+    void INodeService.Prepare(int v, int s, int r, int b) => OnPrepare(v, s, r, b);
+
+    void INodeService.Commit(int v, int s, int ni) => OnCommit(v, s, ni);
+
+    void INodeService.ViewChange(int v, (int s, int r)[] Pb, int b) => OnViewChange(v, Pb, b);
+
+    void INodeService.NewView(int v, int p, int ni) => OnNewView(v, p, ni);
+
+    #endregion
 }

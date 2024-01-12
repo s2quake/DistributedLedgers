@@ -7,11 +7,11 @@ partial class Algorithm_4_9Command
 {
     public interface INodeService
     {
-        [ServerMethod]
-        Task SendAsync(string nodeId, int value, CancellationToken cancellationToken);
+        [ServerMethod(IsOneWay = true)]
+        void SendValue(string nodeId, int value);
 
-        [ServerMethod]
-        Task SendManyAsync((string nodeId, int value)[] values, CancellationToken cancellationToken);
+        [ServerMethod(IsOneWay = true)]
+        void SendMany((string nodeId, int value)[] values);
     }
 
     sealed class ServerNodeService : ServerService<INodeService>, INodeService
@@ -19,15 +19,13 @@ partial class Algorithm_4_9Command
         private readonly ConcurrentDictionary<string, int> _valueByNode = new();
         private readonly ConcurrentBag<(string nodeId, int value)[]> _values = [];
 
-        public async Task SendAsync(string nodeId, int value, CancellationToken cancellationToken)
+        public void SendValue(string nodeId, int value)
         {
-            await Task.CompletedTask;
             _valueByNode.AddOrUpdate(nodeId, value, (k, v) => value);
         }
 
-        public async Task SendManyAsync((string nodeId, int value)[] values, CancellationToken cancellationToken)
+        public void SendMany((string nodeId, int value)[] values)
         {
-            await Task.CompletedTask;
             _values.Add(values);
         }
 
@@ -60,14 +58,5 @@ partial class Algorithm_4_9Command
 
     sealed class ClientNodeService : ClientService<INodeService>
     {
-        public async void SendValue(string nodeId, int value)
-        {
-            await Server.SendAsync(nodeId, value, CancellationToken.None);
-        }
-
-        public async void SendMany((string nodeId, int value)[] values)
-        {
-            await Server.SendManyAsync(values, CancellationToken.None);
-        }
     }
 }

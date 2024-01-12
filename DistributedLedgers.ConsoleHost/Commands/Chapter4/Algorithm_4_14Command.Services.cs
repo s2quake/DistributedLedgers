@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Net;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
+using Newtonsoft.Json.Converters;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter4;
 
@@ -9,11 +11,11 @@ partial class Algorithm_4_14Command
 {
     public interface INodeService
     {
-        [ServerMethod]
-        Task ValueAsync(int nodeIndex, int value, CancellationToken cancellationToken);
+        [ServerMethod(IsOneWay = true)]
+        void Value(int nodeIndex, int value);
 
-        [ServerMethod]
-        Task ProposeAsync(int nodeIndex, int value, CancellationToken cancellationToken);
+        [ServerMethod(IsOneWay = true)]
+        void Propose(int nodeIndex, int value);
     }
 
     sealed class ServerNodeService : ServerService<INodeService>, INodeService
@@ -21,15 +23,13 @@ partial class Algorithm_4_14Command
         private readonly ConcurrentDictionary<int, int> _valueByNodeIndex = new();
         private readonly ConcurrentDictionary<int, int> _proposeByNodeIndex = new();
 
-        async Task INodeService.ValueAsync(int nodeIndex, int value, CancellationToken cancellationToken)
+        void INodeService.Value(int nodeIndex, int value)
         {
-            await Task.CompletedTask;
             _valueByNodeIndex.AddOrUpdate(nodeIndex, value, (k, v) => value);
         }
 
-        async Task INodeService.ProposeAsync(int nodeIndex, int value, CancellationToken cancellationToken)
+        void INodeService.Propose(int nodeIndex, int value)
         {
-            await Task.CompletedTask;
             _proposeByNodeIndex.AddOrUpdate(nodeIndex, value, (k, v) => value);
         }
 
@@ -48,19 +48,12 @@ partial class Algorithm_4_14Command
 
     sealed class ClientNodeService : ClientService<INodeService>
     {
-        public async void Value(int nodeIndex, int value)
-        {
-            await Server.ValueAsync(nodeIndex, value, CancellationToken.None);
-        }
-
-        public async void Propose(int nodeIndex, int value)
-        {
-            await Server.ProposeAsync(nodeIndex, value, CancellationToken.None);
-        }
     }
 
-    sealed class Node : NodeBase<Node, ServerNodeService, ClientNodeService>
+    sealed class Node : NodeBase<Node, INodeService>
     {
+        private readonly ServerNodeService _serverService = new();
+
         public int Value { get; private set; }
 
         public async ValueTask RunAsync(int x, int f, CancellationToken cancellationToken)
@@ -76,7 +69,7 @@ partial class Algorithm_4_14Command
                 Broadcast((_, service) => service.Value(nodeIndex, x1));
 
                 // round 2
-                var valueByNodeIndex = await ServerService.WaitForValueAsync(cancellationToken);
+                var valueByNodeIndex = await _serverService.WaitForValueAsync(cancellationToken);
                 var v1 = valueByNodeIndex.ToLookup(item => item.Value)
                             .Where(item => item.Count() >= (n - f))
                             .FirstOrDefault();
@@ -87,7 +80,7 @@ partial class Algorithm_4_14Command
                     Broadcast((_, service) => service.Propose(nodeIndex, v2));
                 }
 
-                var proposeByNodeIndex = await ServerService.WaitForProposeAsync(cancellationToken);
+                var proposeByNodeIndex = await _serverService.WaitForProposeAsync(cancellationToken);
                 var p1 = proposeByNodeIndex.ToLookup(item => item.Value)
                             .OrderByDescending(item => item.Count())
                             .Where(item => item.Count() >= f)
@@ -106,7 +99,7 @@ partial class Algorithm_4_14Command
                     Console.WriteLine($"{this}: step {i}, round 3, 👑, propose => {x2}");
                 }
 
-                var proposeByNodeIndex2 = await ServerService.WaitForProposeAsync(cancellationToken);
+                var proposeByNodeIndex2 = await _serverService.WaitForProposeAsync(cancellationToken);
                 var p2 = proposeByNodeIndex2.Values.Where(item => item == x);
                 if (p2.Count() < (n - f))
                 {
@@ -122,6 +115,18 @@ partial class Algorithm_4_14Command
                 }
             }
             Value = x;
+        }
+
+        protected override async Task<(Client, INodeService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken)
+        {
+            var clientService = new ClientNodeService();
+            var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
+            return (client, clientService.Server);
+        }
+
+        protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
+        {
+            return Server.CreateAsync(endPoint, _serverService, cancellationToken);
         }
 
         private static int NextValue() => Random.Shared.Next();

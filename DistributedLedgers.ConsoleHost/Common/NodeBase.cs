@@ -1,19 +1,15 @@
 using System.Net;
-using JSSoft.Communication;
 
 namespace DistributedLedgers.ConsoleHost.Common;
 
-abstract class NodeBase<T, TServerService, TClientService>
+abstract class NodeBase<T, TService>
     : IAsyncDisposable
-    where T : NodeBase<T, TServerService, TClientService>
-    where TServerService : class, IService
-    where TClientService : class, IService
+    where T : NodeBase<T, TService>
 {
     private readonly List<Client> _clientList = [];
-    private readonly Dictionary<EndPoint, TClientService> _clientServiceByEndPoint = [];
+    private readonly Dictionary<EndPoint, TService> _clientServiceByEndPoint = [];
     private readonly List<EndPoint> _nodeList = [];
     private Server? _server;
-    private TServerService? _serverService;
     private int _index = -1;
     private bool _isByzantine;
 
@@ -28,12 +24,9 @@ abstract class NodeBase<T, TServerService, TClientService>
     public static async Task<T> CreateAsync(int index, bool isByzantine, EndPoint endPoint, CancellationToken cancellationToken)
     {
         var node = (T)Activator.CreateInstance(typeof(T))!;
-        var serverService = node.CreateServerService();
-        var clientService = node.CreateClientService();
-        var server = await Server.CreateAsync(endPoint, serverService, cancellationToken);
-        var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
+        var server = await node.CreateServerAsync(endPoint, cancellationToken);
+        var (client, clientService) = await node.CreateClientAsync(endPoint, cancellationToken);
         node._server = server;
-        node._serverService = serverService;
         node._index = index;
         node._isByzantine = isByzantine;
         node._clientList.Add(client);
@@ -72,8 +65,7 @@ abstract class NodeBase<T, TServerService, TClientService>
 
     public async Task AddNodeAsync(EndPoint endPoint, CancellationToken cancellationToken)
     {
-        var clientService = CreateClientService();
-        var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
+        var (client, clientService) = await CreateClientAsync(endPoint, cancellationToken);
         lock (this)
         {
             _clientList.Add(client);
@@ -89,11 +81,10 @@ abstract class NodeBase<T, TServerService, TClientService>
         if (_server != null)
             await _server.DisposeAsync();
         _server = null;
-        _serverService = null;
         Console.WriteLine($"{this}: has been destroyed.");
     }
 
-    public TClientService GetClientService(EndPoint endPoint) => _clientServiceByEndPoint[endPoint];
+    public TService GetClientService(EndPoint endPoint) => _clientServiceByEndPoint[endPoint];
 
     public override string ToString()
     {
@@ -101,9 +92,7 @@ abstract class NodeBase<T, TServerService, TClientService>
         return $"{byzantine} Node({_index + 1})";
     }
 
-    protected TServerService ServerService => _serverService ?? throw new InvalidOperationException();
-
-    protected void Broadcast(Action<EndPoint, TClientService> action)
+    protected void Broadcast(Action<EndPoint, TService> action)
     {
         if (IsByzantine == false || Random.Shared.Next() % 2 == 0)
         {
@@ -111,16 +100,14 @@ abstract class NodeBase<T, TServerService, TClientService>
         }
     }
 
-    protected void Send(EndPoint endPoint, Action<TClientService> action)
+    protected void Send(EndPoint endPoint, Action<TService> action)
     {
         action.Invoke(_clientServiceByEndPoint[endPoint]);
     }
 
-    protected virtual TServerService CreateServerService()
-        => (TServerService)Activator.CreateInstance(typeof(TServerService))!;
+    protected abstract Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken);
 
-    protected virtual TClientService CreateClientService()
-        => (TClientService)Activator.CreateInstance(typeof(TClientService))!;
+    protected abstract Task<(Client, TService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken);
 
     protected virtual ValueTask OnDisposeAsync() => ValueTask.CompletedTask;
 
