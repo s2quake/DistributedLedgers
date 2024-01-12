@@ -18,7 +18,7 @@ sealed class CommitMessageCollection : IEnumerable<CommitMessage>
         _itemList.Add(new(V: v, S: s, Ni: ni));
         if (_itemList.Where(Compare).Count() >= minimum)
         {
-            _itemList.RemoveAll(Compare);
+            // _itemList.RemoveAll(Compare);
             return true;
         }
         return false;

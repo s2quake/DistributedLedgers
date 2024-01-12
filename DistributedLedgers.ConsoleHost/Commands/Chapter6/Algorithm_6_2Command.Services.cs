@@ -50,18 +50,11 @@ partial class Algorithm_6_2Command
                 if (s.Count >= i && s.ContainsKey(p) == true && s[p] == true)
                 {
                     var b1 = IsByzantine == true ? false : true;
-                    Broadcast((_, service) => service.Value(nodeIndex, b1));
+                    SendAll(service => service.Value(nodeIndex, b1));
                     Value = true;
                     return;
                 }
             }
-        }
-
-        protected override async Task<(Client, INodeService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken)
-        {
-            var clientService = new ClientService<INodeService>();
-            var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
-            return (client, clientService.Server);
         }
 
         protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
@@ -76,7 +69,7 @@ partial class Algorithm_6_2Command
             if (b == true)
             {
                 var b1 = IsByzantine != true || !b;
-                Broadcast((_, service) => service.Value(nodeIndex, b1));
+                SendAll(service => service.Value(nodeIndex, b1));
                 Value = true;
             }
             else

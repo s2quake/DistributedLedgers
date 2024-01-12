@@ -18,7 +18,7 @@ sealed class PrepareMessageCollection : IEnumerable<PrepareMessage>
         _itemList.Add(new(V: v, S: s, R: r));
         if (_itemList.Where(Compare).Count() >= minimum)
         {
-            _itemList.RemoveAll(Compare);
+            // _itemList.RemoveAll(Compare);
             return true;
         }
         return false;

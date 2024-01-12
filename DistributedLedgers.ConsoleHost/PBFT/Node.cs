@@ -14,6 +14,12 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
     private bool _isEnd;
     private int _f;
     private EndPoint[] _endPoints = [];
+    private readonly Broadcaster _broadcaster;
+
+    public Node()
+    {
+        _broadcaster = new(this);
+    }
 
     public (int r, int c)[] Value => [.. _replyMessageList.OrderBy(item => item.c)];
 
@@ -21,7 +27,7 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
     {
         _endPoints = endPoints;
         _f = f;
-        _view = new View(v: 0, endPoints, f, this);
+        _view = new View(v: 0, endPoints, f, this, _broadcaster);
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -43,111 +49,65 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         lock (_lockObject)
         {
             _requestMessageList.Add((r, c));
-        }
-        _view.Dispatcher.InvokeAsync(() => _view.RequestFromClient(r, c));
-    }
-
-    internal async void OnRequest(int r, int c, int ni)
-    {
-        await _view!.RequestFromBackupAsync(r, c, ni, CancellationToken.None);
-    }
-
-    internal void OnPrePrepare(int v, int s, int r, int ni)
-    {
-        if (_view is { } view && view.Index == v)
-        {
-            view.Dispatcher.InvokeAsync(() => view.PrePrepare(v, s, r, ni));
-        }
-    }
-
-    internal void OnPrepare(int v, int s, int r, int ni)
-    {
-        if (_view is { } view && view.Index == v)
-        {
-            view.Dispatcher.InvokeAsync(() => view.Prepare(v, s, r, ni));
-        }
-    }
-
-    internal void OnCommit(int v, int s, int ni)
-    {
-        if (_view is { } view && view.Index == v)
-        {
-            view.Dispatcher.InvokeAsync(() => view.Commit(v, s, ni));
-        }
-    }
-
-    internal void OnViewChange(int v, (int s, int r)[] Pb, int b)
-    {
-        if (_view != null)
-        {
-            _view.Dispose();
-            _viewByIndex.Add(_view.Index, _view);
-        }
-        _view = new View(v, _endPoints, _f, this);
-        _view.ViewChange(Pb);
-    }
-
-    internal void OnNewView(int v, int p, int ni)
-    {
-        lock (_lockObject)
-        {
-
-        }
-    }
-
-    internal void BroadcastPrePrepare(int v, int s, int r, int p)
-    {
-        Broadcast((node, service) =>
-        {
-            if (node != EndPoint)
+            if (_view is { } view)
             {
-                service.PrePrepare(v, s, r, p);
+                view.Dispatcher.InvokeAsync(() => view.RequestFromClient(r, c));
             }
-        });
+        }
     }
 
-    internal void BroadcastPrepare(int v, int s, int r, int b)
-    {
-        Broadcast((node, service) =>
-        {
-            if (node != EndPoint)
-            {
-                service.Prepare(v, s, r, b);
-            }
-        });
-    }
+    // internal void BroadcastPrePrepare(int v, int s, int r, int p)
+    // {
+    //     SendAll((node, service) =>
+    //     {
+    //         if (node != EndPoint)
+    //         {
+    //             service.PrePrepare(v, s, r, p);
+    //         }
+    //     });
+    // }
 
-    internal void BroadcastCommit(int v, int s, int ni)
-    {
-        Broadcast((node, service) =>
-        {
-            if (node != EndPoint)
-            {
-                service.Commit(v, s, ni);
-            }
-        });
-    }
+    // internal void BroadcastPrepare(int v, int s, int r, int b)
+    // {
+    //     SendAll((node, service) =>
+    //     {
+    //         if (node != EndPoint)
+    //         {
+    //             service.Prepare(v, s, r, b);
+    //         }
+    //     });
+    // }
 
-    internal void BroadcastNewView(int v, int p, int ni)
-    {
-        Broadcast((node, service) =>
-        {
-            service.NewView(v, p, ni);
-        });
-    }
+    // internal void BroadcastCommit(int v, int s, int ni)
+    // {
+    //     SendAll((node, service) =>
+    //     {
+    //         if (node != EndPoint)
+    //         {
+    //             service.Commit(v, s, ni);
+    //         }
+    //     });
+    // }
 
-    internal void BroadcastViewChange(int v, (int s, int r)[] Pb, int b)
-    {
-        Broadcast((node, service) =>
-        {
-            service.ViewChange(v, Pb, b);
-        });
-    }
+    // internal void BroadcastNewView(int v, int p, int ni)
+    // {
+    //     SendAll((node, service) =>
+    //     {
+    //         service.NewView(v, p, ni);
+    //     });
+    // }
 
-    internal void SendRequest(EndPoint endPoint, int r, int c, int ni)
+    // internal void BroadcastViewChange(int v, (int s, int r)[] Pb, int b)
+    // {
+    //     SendAll((node, service) =>
+    //     {
+    //         service.ViewChange(v, Pb, b);
+    //     });
+    // }
+
+    internal Task SendRequestAsync(EndPoint endPoint, int v, int r, int c, int ni, CancellationToken cancellationToken)
     {
-        // var service = GetClientService(receiverNode);
-        // await service.Request(r, c, ni, cancellationToken);
+        return SendAsync(endPoint, (service, cancellationToken) => service.RequestAsync(v, r, c, ni, cancellationToken), cancellationToken);
     }
 
     internal void ViewChange(int v)
@@ -165,13 +125,6 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         }
     }
 
-    protected override async Task<(Client, INodeService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken)
-    {
-        var clientService = new ClientService<INodeService>();
-        var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
-        return (client, clientService.Server);
-    }
-
     protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
     {
         return Server.CreateAsync(endPoint, new ServerService<INodeService>(this), cancellationToken);
@@ -180,22 +133,92 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
     protected override ValueTask OnDisposeAsync()
     {
         _view?.Dispose();
+        foreach (var item in _viewByIndex.Values)
+        {
+            item.Dispose();
+        }
         return base.OnDisposeAsync();
     }
 
+    #region Broadcaster
+
+    sealed class Broadcaster(Node node) : IBroadcaster<Node, INodeService>
+    {
+        private readonly Node _node = node;
+
+        public void Send(EndPoint endPoint, Action<INodeService> action)
+        {
+            _node.Send(endPoint, action);
+        }
+
+        public void SendAll(Action<INodeService> action, Predicate<EndPoint> predicate)
+        {
+            _node.SendAll(action, predicate);
+        }
+    }
+
+    #endregion
+
     #region INodeService
 
-    void INodeService.Request(int r, int c, int ni) => OnRequest(r, c, ni);
+    async Task INodeService.RequestAsync(int v, int r, int c, int ni, CancellationToken cancellationToken)
+    {
+        await Task.Delay(Random.Shared.Next(500, 2000), cancellationToken);
+    }
 
-    void INodeService.PrePrepare(int v, int s, int r, int p) => OnPrePrepare(v, s, r, p);
+    void INodeService.PrePrepare(int v, int s, int r, int p)
+    {
+        if (_view is { } view && view.Index == v)
+        {
+            view.Dispatcher.InvokeAsync(() => view.PrePrepare(v, s, r, p));
+        }
+    }
 
-    void INodeService.Prepare(int v, int s, int r, int b) => OnPrepare(v, s, r, b);
+    void INodeService.Prepare(int v, int s, int r, int b)
+    {
+        if (_view is { } view && view.Index == v)
+        {
+            view.Dispatcher.InvokeAsync(() => view.Prepare(v, s, r, b));
+        }
+    }
 
-    void INodeService.Commit(int v, int s, int ni) => OnCommit(v, s, ni);
+    void INodeService.Commit(int v, int s, int ni)
+    {
+        if (_view is { } view && view.Index == v)
+        {
+            view.Dispatcher.InvokeAsync(() => view.Commit(v, s, ni));
+        }
+    }
 
-    void INodeService.ViewChange(int v, (int s, int r)[] Pb, int b) => OnViewChange(v, Pb, b);
 
-    void INodeService.NewView(int v, int p, int ni) => OnNewView(v, p, ni);
+    private List<(int s, int r)> _V = new();
+    void INodeService.ViewChange(int v, (int s, int r)[] Pb, int b)
+    {
+        lock (_lockObject)
+        {
+            if (_view is { } view && view.Index != v)
+            {
+                Console.WriteLine($"view change: {v}");
+                _viewByIndex.Add(view.Index, view);
+                _view = null;
+                // _view = new View(v, _endPoints, _f, this, _broadcaster);
+            }
+
+            _V.AddRange(Pb);
+            int qewr = 0;
+        }
+        // {
+        //     if (_view is { } view && view.Index == v)
+        //     {
+        //         view.Dispatcher.InvokeAsync(() => view.ViewChange(Pb));
+        //     }
+        // }
+    }
+
+    void INodeService.NewView(int v, int p, int ni)
+    {
+
+    }
 
     #endregion
 }

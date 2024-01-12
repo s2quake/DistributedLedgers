@@ -31,14 +31,14 @@ sealed partial class PBFT_Command : CommandAsyncBase
         await using var nodes = await PBFT.Node.CreateManyAsync(endPoints, f, cancellationToken);
         await Out.WriteLineAsync("============ agreement ============");
         Parallel.ForEach(nodes, item => item.Initialize(endPoints, f));
-        for (var c = 0; c < 10; c++)
+        Parallel.ForEach(Enumerable.Range(0, 10), c =>
         {
             var r = Random.Shared.Next();
             foreach (var item in nodes)
             {
                 item.Request(r: r, c: c);
             }
-        }
+        });
         await Task.WhenAll(nodes.OrderBy(item => item.GetHashCode()).Select(item => item.RunAsync(cancellationToken)));
 
         var tsb = new TerminalStringBuilder();

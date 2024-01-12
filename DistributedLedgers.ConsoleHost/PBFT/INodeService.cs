@@ -4,8 +4,8 @@ namespace DistributedLedgers.ConsoleHost.PBFT;
 
 public interface INodeService
 {
-    [ServerMethod(IsOneWay = true)]
-    void Request(int r, int c, int ni);
+    [ServerMethod]
+    Task RequestAsync(int v, int r, int c, int ni, CancellationToken cancellationToken);
 
     [ServerMethod(IsOneWay = true)]
     void PrePrepare(int v, int s, int r, int p);

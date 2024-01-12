@@ -55,8 +55,4 @@ partial class Algorithm_4_9Command
             throw new NotImplementedException();
         }
     }
-
-    sealed class ClientNodeService : ClientService<INodeService>
-    {
-    }
 }

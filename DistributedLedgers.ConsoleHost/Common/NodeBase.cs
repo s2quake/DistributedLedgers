@@ -1,10 +1,12 @@
 using System.Net;
+using JSSoft.Communication;
 
 namespace DistributedLedgers.ConsoleHost.Common;
 
 abstract class NodeBase<T, TService>
     : IAsyncDisposable
     where T : NodeBase<T, TService>
+    where TService : class
 {
     private readonly List<Client> _clientList = [];
     private readonly Dictionary<EndPoint, TService> _clientServiceByEndPoint = [];
@@ -84,19 +86,20 @@ abstract class NodeBase<T, TService>
         Console.WriteLine($"{this}: has been destroyed.");
     }
 
-    public TService GetClientService(EndPoint endPoint) => _clientServiceByEndPoint[endPoint];
-
     public override string ToString()
     {
         var byzantine = _isByzantine == true ? "😡" : "😀";
         return $"{byzantine} Node({_index + 1})";
     }
 
-    protected void Broadcast(Action<EndPoint, TService> action)
+    protected void SendAll(Action<TService> action)
+        => SendAll(action, item => true);
+
+    protected void SendAll(Action<TService> action, Predicate<EndPoint> predicate)
     {
         if (IsByzantine == false || Random.Shared.Next() % 2 == 0)
         {
-            Parallel.ForEach(_clientServiceByEndPoint, item => action.Invoke(item.Key, item.Value));
+            Parallel.ForEach(_clientServiceByEndPoint.Where(item => predicate(item.Key)), item => action.Invoke(item.Value));
         }
     }
 
@@ -105,9 +108,24 @@ abstract class NodeBase<T, TService>
         action.Invoke(_clientServiceByEndPoint[endPoint]);
     }
 
+    protected Task SendAsync(EndPoint endPoint, Func<TService, CancellationToken, Task> action, CancellationToken cancellationToken)
+    {
+        return action.Invoke(_clientServiceByEndPoint[endPoint], cancellationToken);
+    }
+
+    protected Task<TResult> SendAsync<TResult>(EndPoint endPoint, Func<TService, CancellationToken, Task<TResult>> action, CancellationToken cancellationToken)
+    {
+        return action.Invoke(_clientServiceByEndPoint[endPoint], cancellationToken);
+    }
+
     protected abstract Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken);
 
-    protected abstract Task<(Client, TService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken);
+    protected virtual async Task<(Client, TService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken)
+    {
+        var clientService = new ClientService<TService>();
+        var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
+        return (client, clientService.Server);
+    }
 
     protected virtual ValueTask OnDisposeAsync() => ValueTask.CompletedTask;
 

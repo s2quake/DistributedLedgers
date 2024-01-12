@@ -46,10 +46,6 @@ partial class Algorithm_4_14Command
         }
     }
 
-    sealed class ClientNodeService : ClientService<INodeService>
-    {
-    }
-
     sealed class Node : NodeBase<Node, INodeService>
     {
         private readonly ServerNodeService _serverService = new();
@@ -66,7 +62,7 @@ partial class Algorithm_4_14Command
                 // round 1
                 var x1 = IsByzantine == true ? NextValue() : x;
                 Console.WriteLine($"{this}: step {i}, round 1, value => {x1}");
-                Broadcast((_, service) => service.Value(nodeIndex, x1));
+                SendAll(service => service.Value(nodeIndex, x1));
 
                 // round 2
                 var valueByNodeIndex = await _serverService.WaitForValueAsync(cancellationToken);
@@ -77,7 +73,7 @@ partial class Algorithm_4_14Command
                 {
                     var v2 = IsByzantine == true ? NextValue() : v1.Key;
                     Console.WriteLine($"{this}: step {i}, round 2, propose => {v2}");
-                    Broadcast((_, service) => service.Propose(nodeIndex, v2));
+                    SendAll(service => service.Propose(nodeIndex, v2));
                 }
 
                 var proposeByNodeIndex = await _serverService.WaitForProposeAsync(cancellationToken);
@@ -95,7 +91,7 @@ partial class Algorithm_4_14Command
                 if (nodeIndex == i)
                 {
                     var x2 = IsByzantine == true ? NextValue() : x;
-                    Broadcast((_, service) => service.Propose(nodeIndex, x2));
+                    SendAll(service => service.Propose(nodeIndex, x2));
                     Console.WriteLine($"{this}: step {i}, round 3, 👑, propose => {x2}");
                 }
 
@@ -115,13 +111,6 @@ partial class Algorithm_4_14Command
                 }
             }
             Value = x;
-        }
-
-        protected override async Task<(Client, INodeService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken)
-        {
-            var clientService = new ClientNodeService();
-            var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
-            return (client, clientService.Server);
         }
 
         protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)

@@ -47,7 +47,7 @@ partial class Algorithm_4_21Command
             var r = 1;
             var nodeIndex = Index;
             var decided = false;
-            Broadcast((_, service) => service.Propose(x, r));
+            SendAll(service => service.Propose(x, r));
             do
             {
                 Console.WriteLine($"{this}: round {r}, value => {x}");
@@ -69,16 +69,9 @@ partial class Algorithm_4_21Command
                     x = Random.Shared.Next() % 2 == 0;
                 }
                 r++;
-                Broadcast((_, service) => service.Propose(x, r));
+                SendAll(service => service.Propose(x, r));
             } while (decided != true);
             Value = x;
-        }
-
-        protected override async Task<(Client, INodeService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken)
-        {
-            var clientService = new ClientService<INodeService>();
-            var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
-            return (client, clientService.Server);
         }
 
         protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)

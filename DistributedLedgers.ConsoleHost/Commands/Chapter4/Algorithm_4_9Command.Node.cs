@@ -16,22 +16,15 @@ partial class Algorithm_4_9Command
             var value = Random.Shared.Next();
             var count = Nodes.Count;
 
-            Broadcast((_, service) => service.SendValue($"{EndPoint}", value));
+            SendAll(service => service.SendValue($"{EndPoint}", value));
             var values1 = await _serverService.WaitForValueAsync(count, cancellationToken);
 
-            Broadcast((_, service) => service.SendMany(values1));
+            SendAll(service => service.SendMany(values1));
             var values2 = await _serverService.WaitForValuesAsync(count, cancellationToken);
 
             var values3 = values2.Concat(values1);
             var v = values3.Min(item => item.value);
             Value = v;
-        }
-
-        protected override async Task<(Client, INodeService)> CreateClientAsync(EndPoint endPoint, CancellationToken cancellationToken)
-        {
-            var clientService = new ClientNodeService();
-            var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
-            return (client, clientService.Server);
         }
 
         protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
