@@ -1,3 +1,4 @@
+using System.Net;
 using JSSoft.Communication;
 
 namespace DistributedLedgers.ConsoleHost.Common;
@@ -11,21 +12,24 @@ sealed class Server : ServerContext, IAsyncDisposable
     {
     }
 
-    public static Task<Server> CreateAsync(IService service, CancellationToken cancellationToken) => CreateAsync(DefaultPort, service, cancellationToken);
+    public static Task<Server> CreateAsync(IService service, CancellationToken cancellationToken) => CreateAsync(new(DefaultHost, DefaultPort), service, cancellationToken);
 
-    public static async Task<Server> CreateAsync(int port, IService service, CancellationToken cancellationToken)
+    public static async Task<Server> CreateAsync(DnsEndPoint endPoint, IService service, CancellationToken cancellationToken)
     {
-        var server = new Server([service]) { Port = port };
+        var server = new Server([service])
+        {
+            EndPoint = endPoint,
+        };
         server._token = await server.OpenAsync(cancellationToken);
         return server;
     }
 
-    public static async Task<AsyncDisposableCollection<Server>> CreateManyAsync(int[] ports, IService[] services, CancellationToken cancellationToken)
+    public static async Task<AsyncDisposableCollection<Server>> CreateManyAsync(DnsEndPoint[] endPoints, IService[] services, CancellationToken cancellationToken)
     {
-        var tasks = new Task<Server>[ports.Length];
+        var tasks = new Task<Server>[endPoints.Length];
         for (var i = 0; i < tasks.Length; i++)
         {
-            tasks[i] = CreateAsync(ports[i], services[i], cancellationToken);
+            tasks[i] = CreateAsync(endPoints[i], services[i], cancellationToken);
         }
         return await AsyncDisposableCollection<Server>.CreateAsync(tasks);
     }

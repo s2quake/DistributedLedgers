@@ -14,15 +14,15 @@ sealed partial class Algorithm_2_10Command : CommandAsyncBase
 
     protected override async Task OnExecuteAsync(CancellationToken cancellationToken, IProgress<ProgressInfo> progress)
     {
-        var serverPorts = PortUtility.GetPorts(2);
+        var serverEndPoints = PortUtility.GetEndPoints(2);
         var serverService1 = new ServerMessageService("server1");
         var serverService2 = new ServerMessageService("server2");
         Out.WriteLine("Nodes initializing.");
-        await using var server1 = await Server.CreateAsync(serverPorts[0], serverService1, cancellationToken);
-        await using var server2 = await Server.CreateAsync(serverPorts[1], serverService2, cancellationToken);
-        await using var client1 = await Client.CreateAsync(serverPorts, cancellationToken);
-        await using var client2 = await Client.CreateAsync(serverPorts, cancellationToken);
-        await using var client3 = await Client.CreateAsync(serverPorts, cancellationToken);
+        await using var server1 = await Server.CreateAsync(serverEndPoints[0], serverService1, cancellationToken);
+        await using var server2 = await Server.CreateAsync(serverEndPoints[1], serverService2, cancellationToken);
+        await using var client1 = await Client.CreateAsync(serverEndPoints, cancellationToken);
+        await using var client2 = await Client.CreateAsync(serverEndPoints, cancellationToken);
+        await using var client3 = await Client.CreateAsync(serverEndPoints, cancellationToken);
         Out.WriteLine("Nodes initialized.");
 
         await Task.WhenAll(

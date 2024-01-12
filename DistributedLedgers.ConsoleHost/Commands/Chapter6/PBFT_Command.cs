@@ -27,8 +27,8 @@ sealed partial class PBFT_Command : CommandAsyncBase
         var n = NodeCount;
         // var f = ByzantineUtility.GetByzantineCount(n, (n, f) => n == 3 * f + 1);
         var f = 0;
-        var ports = PortUtility.GetPorts(n);
-        await using var nodes = await PBFT.Node.CreateManyAsync(ports, f, cancellationToken);
+        var endPoints = PortUtility.GetEndPoints(n);
+        await using var nodes = await PBFT.Node.CreateManyAsync(endPoints, f, cancellationToken);
         await Out.WriteLineAsync("============ agreement ============");
         Parallel.ForEach(nodes, item => item.Initialize(n, f));
         for (var c = 0; c < 10; c++)

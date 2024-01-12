@@ -1,3 +1,4 @@
+using System.Net;
 using JSSoft.Communication;
 
 namespace DistributedLedgers.ConsoleHost.Common;
@@ -9,56 +10,58 @@ abstract class NodeBase<T, TServerService, TClientService>
     where TClientService : class, IService
 {
     private readonly List<Client> _clientList = [];
-    private readonly Dictionary<T, TClientService> _clientServiceByNode = [];
-    private readonly List<T> _nodeList = [];
+    private readonly Dictionary<DnsEndPoint, TClientService> _clientServiceByEndPoint = [];
+    private readonly List<TClientService> _nodeList = [];
     private Server? _server;
     private TServerService? _serverService;
     private int _index = -1;
     private bool _isByzantine;
 
-    public int Port => _server?.Port ?? throw new InvalidOperationException();
+    // public int Port => _server?.Port ?? throw new InvalidOperationException();
+
+    public DnsEndPoint EndPoint => _server?.EndPoint ?? throw new InvalidOperationException();
 
     public int Index => _index;
 
-    public IReadOnlyList<T> Nodes => _nodeList;
+    public IReadOnlyList<TClientService> Nodes => _nodeList;
 
     public bool IsByzantine => _isByzantine;
 
-    public static async Task<T> CreateAsync(int index, bool isByzantine, int port, CancellationToken cancellationToken)
+    public static async Task<T> CreateAsync(int index, bool isByzantine, DnsEndPoint endPoint, CancellationToken cancellationToken)
     {
         var node = (T)Activator.CreateInstance(typeof(T))!;
         var serverService = node.CreateServerService();
         var clientService = node.CreateClientService();
-        var server = await Server.CreateAsync(port, serverService, cancellationToken);
-        var client = await Client.CreateAsync(port, clientService, cancellationToken);
+        var server = await Server.CreateAsync(endPoint, serverService, cancellationToken);
+        var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
         node._server = server;
         node._serverService = serverService;
         node._index = index;
         node._isByzantine = isByzantine;
         node._clientList.Add(client);
-        node._clientServiceByNode.Add(node, clientService);
+        node._clientServiceByEndPoint.Add(endPoint, clientService);
         Console.WriteLine($"{node}: has been created.");
         return node;
     }
 
-    public static Task<AsyncDisposableCollection<T>> CreateManyAsync(int[] ports, CancellationToken cancellationToken)
+    public static Task<AsyncDisposableCollection<T>> CreateManyAsync(DnsEndPoint[] endPoints, CancellationToken cancellationToken)
     {
-        return CreateManyAsync(ports, byzantineCount: 0, cancellationToken);
+        return CreateManyAsync(endPoints, byzantineCount: 0, cancellationToken);
     }
 
-    public static async Task<AsyncDisposableCollection<T>> CreateManyAsync(int[] ports, int byzantineCount, CancellationToken cancellationToken)
+    public static async Task<AsyncDisposableCollection<T>> CreateManyAsync(DnsEndPoint[] endPoints, int byzantineCount, CancellationToken cancellationToken)
     {
         var byzantineIndexes = GetByzantineIndexes();
-        var creationTasks = Enumerable.Range(0, ports.Length).OrderBy(item => Random.Shared.Next()).Select(item => CreateAsync(item, isByzantine: byzantineIndexes.Contains(item), ports[item], cancellationToken)).ToArray();
+        var creationTasks = Enumerable.Range(0, endPoints.Length).OrderBy(item => Random.Shared.Next()).Select(item => CreateAsync(item, isByzantine: byzantineIndexes.Contains(item), endPoints[item], cancellationToken)).ToArray();
         await Task.WhenAll(creationTasks);
         var nodes = await AsyncDisposableCollection<T>.CreateAsync(creationTasks);
-        await Task.WhenAll(nodes.OrderBy(item => item.GetHashCode()).Select(item => AttachNodesAsync(item, nodes, cancellationToken)));
+        await Task.WhenAll(nodes.OrderBy(item => item.GetHashCode()).Select(item => AttachNodesAsync(item, endPoints, cancellationToken)));
         return nodes;
 
         int[] GetByzantineIndexes()
         {
-            var portList = ports.ToList();
-            var indexList = new List<int>(ports.Length);
+            var portList = endPoints.ToList();
+            var indexList = new List<int>(endPoints.Length);
             for (var i = 0; i < byzantineCount; i++)
             {
                 var r = Random.Shared.Next(portList.Count);
@@ -69,16 +72,15 @@ abstract class NodeBase<T, TServerService, TClientService>
         }
     }
 
-    public async Task AddNodeAsync(T node, CancellationToken cancellationToken)
+    public async Task AddNodeAsync(DnsEndPoint endPoint, CancellationToken cancellationToken)
     {
-        var port = node.Port;
         var clientService = CreateClientService();
-        var client = await Client.CreateAsync(port, clientService, cancellationToken);
+        var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
         lock (this)
         {
             _clientList.Add(client);
-            _clientServiceByNode.Add(node, clientService);
-            _nodeList.Add(node);
+            _clientServiceByEndPoint.Add(endPoint, clientService);
+            _nodeList.Add(clientService);
         }
     }
 
@@ -100,20 +102,20 @@ abstract class NodeBase<T, TServerService, TClientService>
 
     protected TServerService ServerService => _serverService ?? throw new InvalidOperationException();
 
-    protected void Broadcast(Action<T, TClientService> action)
+    protected void Broadcast(Action<DnsEndPoint, TClientService> action)
     {
         if (IsByzantine == false || Random.Shared.Next() % 2 == 0)
         {
-            Parallel.ForEach(_clientServiceByNode, item => action.Invoke(item.Key, item.Value));
+            Parallel.ForEach(_clientServiceByEndPoint, item => action.Invoke(item.Key, item.Value));
         }
     }
 
-    protected void Send(T receiverNode, Action<TClientService> action)
+    protected void Send(DnsEndPoint endPoint, Action<TClientService> action)
     {
-        action.Invoke(_clientServiceByNode[receiverNode]);
+        action.Invoke(_clientServiceByEndPoint[endPoint]);
     }
 
-    protected TClientService GetClientService(T node) => _clientServiceByNode[node];
+    protected TClientService GetClientService(DnsEndPoint endPoint) => _clientServiceByEndPoint[endPoint];
 
     protected virtual TServerService CreateServerService()
         => (TServerService)Activator.CreateInstance(typeof(TServerService))!;
@@ -121,9 +123,9 @@ abstract class NodeBase<T, TServerService, TClientService>
     protected virtual TClientService CreateClientService()
         => (TClientService)Activator.CreateInstance(typeof(TClientService))!;
 
-    private static async Task AttachNodesAsync(T node, IEnumerable<T> nodes, CancellationToken cancellationToken)
+    private static async Task AttachNodesAsync(T node, IEnumerable<DnsEndPoint> endPoints, CancellationToken cancellationToken)
     {
-        var others = nodes.Where(item => item != node);
+        var others = endPoints.Where(item => item != node.EndPoint);
         await Task.WhenAll(others.Select(item => node.AddNodeAsync(item, cancellationToken)));
         Console.WriteLine($"{node}: is connected to all nodes.");
     }

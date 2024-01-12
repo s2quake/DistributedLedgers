@@ -95,7 +95,7 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
     {
         Broadcast((node, service) =>
         {
-            if (node != this)
+            if (node != EndPoint)
             {
                 service.PrePrepare(v, s, r, p);
             }
@@ -106,7 +106,7 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
     {
         Broadcast((node, service) =>
         {
-            if (node != this)
+            if (node != EndPoint)
             {
                 service.Prepare(v, s, r, b);
             }
@@ -117,7 +117,7 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
     {
         Broadcast((node, service) =>
         {
-            if (node != this)
+            if (node != EndPoint)
             {
                 service.Commit(v, s, ni);
             }

@@ -1,5 +1,6 @@
 
 using System.ComponentModel.Composition;
+using System.Net;
 using JSSoft.Commands;
 using JSSoft.Terminals;
 
@@ -16,27 +17,27 @@ sealed partial class Algorithm_3_15Command : CommandAsyncBase
     protected override async Task OnExecuteAsync(CancellationToken cancellationToken, IProgress<ProgressInfo> progress)
     {
         var nodeCount = 10;
-        var ports = PortUtility.GetPorts(nodeCount);
-        var creationTasks = ports.Select(item => Node.CreateAsync(item, cancellationToken)).ToArray();
+        var endPoints = PortUtility.GetEndPoints(nodeCount);
+        var creationTasks = endPoints.Select(item => Node.CreateAsync(item, cancellationToken)).ToArray();
         await Task.WhenAll(creationTasks);
 
         await using var nodes = await AsyncDisposableCollection<Node>.CreateAsync(creationTasks);
-        await Parallel.ForEachAsync(nodes, cancellationToken, (item, cancellationToken) => AttachNodesAsync(item, nodes, cancellationToken));
+        await Parallel.ForEachAsync(nodes, cancellationToken, (item, cancellationToken) => AttachNodesAsync(item, endPoints, cancellationToken));
         var runningTasks = nodes.Select(item => item.RunAsync(cancellationToken)).ToArray();
         await Task.WhenAll(runningTasks);
 
         var tsb = new TerminalStringBuilder();
         for (var i = 0; i < nodes.Count; i++)
         {
-            tsb.AppendLine($"{nodes[i].Port}: {nodes[i].Value}");
+            tsb.AppendLine($"{nodes[i]}: {nodes[i].Value}");
             tsb.Append(string.Empty);
         }
         await Out.WriteAsync(tsb.ToString());
     }
 
-    private static async ValueTask AttachNodesAsync(Node node, IEnumerable<Node> nodes, CancellationToken cancellationToken)
+    private static async ValueTask AttachNodesAsync(Node node, IEnumerable<DnsEndPoint> endPoints, CancellationToken cancellationToken)
     {
-        var others = nodes.Where(item => item != node);
+        var others = endPoints.Where(item => item != node.EndPoint);
         await Parallel.ForEachAsync(others, cancellationToken, node.AddNodeAsync);
     }
 }

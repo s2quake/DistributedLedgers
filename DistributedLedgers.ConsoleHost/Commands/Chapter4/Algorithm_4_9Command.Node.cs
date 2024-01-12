@@ -13,7 +13,7 @@ partial class Algorithm_4_9Command
             var value = Random.Shared.Next();
             var count = Nodes.Count;
 
-            Broadcast((_, service) => service.SendValue(Port, value));
+            Broadcast((_, service) => service.SendValue(EndPoint.Port, value));
             var values1 = await ServerService.WaitForValueAsync(count, cancellationToken);
 
             Broadcast((_, service) => service.SendMany(values1));

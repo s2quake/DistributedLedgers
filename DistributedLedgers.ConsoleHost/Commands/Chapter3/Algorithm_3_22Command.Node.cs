@@ -1,3 +1,4 @@
+using System.Net;
 using DistributedLedgers.ConsoleHost.Common;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter3;
@@ -17,22 +18,21 @@ partial class Algorithm_3_22Command
             _serverService = serverService;
         }
 
-        public int Port => _server.Port;
-
         public bool? Value { get; private set; }
 
-        public static async Task<Node> CreateAsync(int port, CancellationToken cancellationToken)
+        public DnsEndPoint EndPoint => _server.EndPoint;
+
+        public static async Task<Node> CreateAsync(DnsEndPoint endPoint, CancellationToken cancellationToken)
         {
-            var service = new ServerNodeService($"server: {port}");
-            var server = await Server.CreateAsync(port, service, cancellationToken);
+            var service = new ServerNodeService($"server: {endPoint}");
+            var server = await Server.CreateAsync(endPoint, service, cancellationToken);
             return new Node(server, service);
         }
 
-        public async ValueTask AddNodeAsync(Node node, CancellationToken cancellationToken)
+        public async ValueTask AddNodeAsync(DnsEndPoint endPoint, CancellationToken cancellationToken)
         {
-            var port = node.Port;
-            var clientService = new ClientNodeService($"client: {port}");
-            var client = await Client.CreateAsync(port, clientService, cancellationToken);
+            var clientService = new ClientNodeService($"client: {endPoint}");
+            var client = await Client.CreateAsync(endPoint, clientService, cancellationToken);
             _clientList.Add(client);
             _clientServiceByClient.Add(client, clientService);
         }
@@ -114,22 +114,22 @@ partial class Algorithm_3_22Command
 
         private void BroadcastPropose(bool? v, int round)
         {
-            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastPropose(Port, v, round));
+            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastPropose(_server.EndPoint.Port, v, round));
         }
 
         private void BroadcastMyValue(bool v, int round)
         {
-            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMyValue(Port, v, round));
+            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMyValue(_server.EndPoint.Port, v, round));
         }
 
         private void BroadcastMyCoin(bool c)
         {
-            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMyCoin(Port, c));
+            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMyCoin(_server.EndPoint.Port, c));
         }
 
         private void BroadcastMySet(bool[] cu)
         {
-            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMySet(Port, cu));
+            Parallel.ForEach(_clientServiceByClient.Values, item => item.BroadcastMySet(_server.EndPoint.Port, cu));
         }
     }
 }

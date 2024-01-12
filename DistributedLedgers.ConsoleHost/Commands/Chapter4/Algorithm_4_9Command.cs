@@ -16,14 +16,14 @@ sealed partial class Algorithm_4_9Command : CommandAsyncBase
     protected override async Task OnExecuteAsync(CancellationToken cancellationToken, IProgress<ProgressInfo> progress)
     {
         var nodeCount = 10;
-        var ports = PortUtility.GetPorts(nodeCount);
-        await using var nodes = await Node.CreateManyAsync(ports, cancellationToken);
+        var endPoints = PortUtility.GetEndPoints(nodeCount);
+        await using var nodes = await Node.CreateManyAsync(endPoints, cancellationToken);
         await Parallel.ForEachAsync(nodes, cancellationToken, (item, cancellationToken) => item.RunAsync(cancellationToken));
 
         var tsb = new TerminalStringBuilder();
         for (var i = 0; i < nodes.Count; i++)
         {
-            tsb.AppendLine($"{nodes[i].Port}: {nodes[i].Value}");
+            tsb.AppendLine($"{nodes[i]}: {nodes[i].Value}");
             tsb.Append(string.Empty);
         }
         await Out.WriteAsync(tsb.ToString());

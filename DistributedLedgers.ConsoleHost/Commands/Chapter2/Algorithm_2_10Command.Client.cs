@@ -1,3 +1,4 @@
+using System.Net;
 using DistributedLedgers.ConsoleHost.Common;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
@@ -10,20 +11,20 @@ partial class Algorithm_2_10Command
         private IMessageService[] _senderServices = [];
         private int?[] _locks = [];
 
-        public static async Task<Client> CreateAsync(int[] serverPorts, CancellationToken cancellationToken)
+        public static async Task<Client> CreateAsync(DnsEndPoint[] endPoints, CancellationToken cancellationToken)
         {
-            var senders = new Common.Client[serverPorts.Length];
-            var senderServices = new ClientMessageService[serverPorts.Length];
-            for (var i = 0; i < serverPorts.Length; i++)
+            var senders = new Common.Client[endPoints.Length];
+            var senderServices = new ClientMessageService[endPoints.Length];
+            for (var i = 0; i < endPoints.Length; i++)
             {
                 senderServices[i] = new ClientMessageService($"client {i}");
-                senders[i] = await Common.Client.CreateAsync(serverPorts[i], senderServices[i], cancellationToken);
+                senders[i] = await Common.Client.CreateAsync(endPoints[i], senderServices[i], cancellationToken);
             }
             return new Client
             {
                 _senders = senders,
                 _senderServices = senderServices,
-                _locks = new int?[serverPorts.Length],
+                _locks = new int?[endPoints.Length],
             };
         }
 

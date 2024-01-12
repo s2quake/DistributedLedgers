@@ -27,8 +27,8 @@ sealed partial class Algorithm_4_21Command : CommandAsyncBase
         {
             var n = NodeCount;
             var f = ByzantineUtility.GetByzantineCount(n, (n, f) => f < n / 10.0);
-            var ports = PortUtility.GetPorts(n);
-            await using var nodes = await Node.CreateManyAsync(ports, f, cancellationToken);
+            var endPoints = PortUtility.GetEndPoints(n);
+            await using var nodes = await Node.CreateManyAsync(endPoints, f, cancellationToken);
             await Out.WriteLineAsync("============ consensus ============");
             await Task.WhenAll(nodes.OrderBy(item => item.GetHashCode()).Select(item => item.RunAsync(Random.Shared.Next() % 2 == 0, f, cancellationToken)));
 

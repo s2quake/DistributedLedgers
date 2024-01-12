@@ -1,3 +1,4 @@
+using System.Net;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
 
@@ -10,16 +11,16 @@ partial class Algorithm_2_9Command
         private Client[] _senders = [];
         private Server? _receiver;
 
-        public static async Task<Serializer> CreateAsync(int port, int[] serverPorts, CancellationToken cancellationToken)
+        public static async Task<Serializer> CreateAsync(DnsEndPoint endPoint, DnsEndPoint[] serverEndPoints, CancellationToken cancellationToken)
         {
-            var senders = new Client[serverPorts.Length];
-            var senderServices = new SerializerSendService[serverPorts.Length];
-            for (var i = 0; i < serverPorts.Length; i++)
+            var senders = new Client[serverEndPoints.Length];
+            var senderServices = new SerializerSendService[serverEndPoints.Length];
+            for (var i = 0; i < serverEndPoints.Length; i++)
             {
                 senderServices[i] = new SerializerSendService();
-                senders[i] = await Client.CreateAsync(serverPorts[i], senderServices[i], cancellationToken);
+                senders[i] = await Client.CreateAsync(serverEndPoints[i], senderServices[i], cancellationToken);
             }
-            var receiver = await Server.CreateAsync(port, new SerializerCallbackService(senderServices), cancellationToken);
+            var receiver = await Server.CreateAsync(endPoint, new SerializerCallbackService(senderServices), cancellationToken);
             return new Serializer
             {
                 _senders = senders,

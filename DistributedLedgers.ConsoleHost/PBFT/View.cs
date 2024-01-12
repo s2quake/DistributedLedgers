@@ -14,6 +14,7 @@ sealed class View(int v, int n, int f, Node node)
     private readonly PrepareMessageCollection _prepareMessages = [];
     private readonly CommitMessageCollection _commitMessages = [];
     private int _s;
+    private Timer? _timer;
 
     public int Index => _v;
 
@@ -38,17 +39,8 @@ sealed class View(int v, int n, int f, Node node)
         }
         else
         {
-            var primaryNode = _node.Nodes.First(item => item.Index == _v);
-            _node.SendRequest(primaryNode, r, c, ni);
-            // try
-            // {
-            //     await _node.SendRequestAsync(primaryNode, r, c, ni, CancellationToken.None);
-            // }
-            // catch (Exception)
-            // {
-            //     var Pb = _prepareMessages.Collect();
-            //     _node.BroadcastViewChange(_v + 1, Pb, _ni);
-            // }
+            // var primaryNode = _node.Nodes.First(item => item.Index == _v);
+            // _node.SendRequest(primaryNode, r, c, ni);
         }
     }
 

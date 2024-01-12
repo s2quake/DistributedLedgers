@@ -25,18 +25,18 @@ sealed partial class Algorithm_2_9Command : CommandAsyncBase
 
     protected override async Task OnExecuteAsync(CancellationToken cancellationToken, IProgress<ProgressInfo> progress)
     {
-        var serializerPort = PortUtility.GetPort();
-        var serverPorts = PortUtility.GetPorts(2);
+        var serializerEndPoint = PortUtility.GetEndPoint();
+        var serverEndPoints = PortUtility.GetEndPoints(2);
         var clientService1 = new ClientMessageService("client1");
         var clientService2 = new ClientMessageService("client2");
         var serverService1 = new ServerMessageService("server1");
         var serverService2 = new ServerMessageService("server2");
         Out.WriteLine("Nodes initializing.");
-        await using var server1 = await Server.CreateAsync(serverPorts[0], serverService1, cancellationToken);
-        await using var server2 = await Server.CreateAsync(serverPorts[1], serverService2, cancellationToken);
-        await using var serializer = await Serializer.CreateAsync(serializerPort, serverPorts, cancellationToken);
-        await using var client1 = await Client.CreateAsync(serializerPort, clientService1, cancellationToken);
-        await using var client2 = await Client.CreateAsync(serializerPort, clientService2, cancellationToken);
+        await using var server1 = await Server.CreateAsync(serverEndPoints[0], serverService1, cancellationToken);
+        await using var server2 = await Server.CreateAsync(serverEndPoints[1], serverService2, cancellationToken);
+        await using var serializer = await Serializer.CreateAsync(serializerEndPoint, serverEndPoints, cancellationToken);
+        await using var client1 = await Client.CreateAsync(serializerEndPoint, clientService1, cancellationToken);
+        await using var client2 = await Client.CreateAsync(serializerEndPoint, clientService2, cancellationToken);
         Out.WriteLine("Nodes initialized.");
 
         await Parallel.ForAsync(0, Sentences.Length, async (i, cancellationToken) =>

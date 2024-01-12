@@ -1,3 +1,4 @@
+using System.Net;
 using DistributedLedgers.ConsoleHost.Common;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
@@ -12,30 +13,30 @@ partial class Algorithm_2_13Command
         private bool[] _ready = [];
         private string _name = string.Empty;
 
-        public static async Task<Client> CreateAsync(string name, int[] serverPorts, CancellationToken cancellationToken)
+        public static async Task<Client> CreateAsync(string name, DnsEndPoint[] serverEndPoints, CancellationToken cancellationToken)
         {
-            var senderServices = new ClientMessageService[serverPorts.Length];
-            for (var i = 0; i < serverPorts.Length; i++)
+            var senderServices = new ClientMessageService[serverEndPoints.Length];
+            for (var i = 0; i < serverEndPoints.Length; i++)
             {
                 senderServices[i] = new ClientMessageService($"client {i}");
             }
-            var senders = await Common.Client.CreateManyAsync(serverPorts, senderServices, cancellationToken);
+            var senders = await Common.Client.CreateManyAsync(serverEndPoints, senderServices, cancellationToken);
             return new Client
             {
                 _name = name,
                 _senders = senders,
                 _senderServices = senderServices,
-                _tickets = new (int store, string? C)?[serverPorts.Length],
-                _ready = new bool[serverPorts.Length],
+                _tickets = new (int store, string? C)?[serverEndPoints.Length],
+                _ready = new bool[serverEndPoints.Length],
             };
         }
 
-        public static async Task<AsyncDisposableCollection<Client>> CreateManyAsync(int count, int[] serverPorts, CancellationToken cancellationToken)
+        public static async Task<AsyncDisposableCollection<Client>> CreateManyAsync(int count, DnsEndPoint[] serverEndPoints, CancellationToken cancellationToken)
         {
             var tasks = new Task<Client>[count];
             for (var i = 0; i < tasks.Length; i++)
             {
-                tasks[i] = CreateAsync($"client {i}", serverPorts, cancellationToken);
+                tasks[i] = CreateAsync($"client {i}", serverEndPoints, cancellationToken);
             }
             return await AsyncDisposableCollection<Client>.CreateAsync(tasks);
         }
