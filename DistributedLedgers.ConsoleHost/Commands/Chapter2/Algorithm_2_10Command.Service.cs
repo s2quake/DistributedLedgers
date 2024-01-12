@@ -6,17 +6,17 @@ partial class Algorithm_2_10Command
 {
     public interface IMessageService
     {
-        [OperationContract]
+        [ServerMethod]
         Task SendMessageAsync(int @lock, string message, CancellationToken cancellationToken);
 
-        [OperationContract]
+        [ServerMethod]
         Task<int> LockAsync(CancellationToken cancellationToken);
 
-        [OperationContract]
+        [ServerMethod]
         Task UnlockAsync(int @lock, CancellationToken cancellationToken);
     }
 
-    sealed class ServerMessageService(string name) : ServerServiceHost<IMessageService>, IMessageService
+    sealed class ServerMessageService(string name) : ServerService<IMessageService>, IMessageService
     {
         private static readonly object obj = new();
         private readonly string _name = name;
@@ -62,25 +62,25 @@ partial class Algorithm_2_10Command
         }
     }
 
-    sealed class ClientMessageService(string name) : ClientServiceHost<IMessageService>, IMessageService
+    sealed class ClientMessageService(string name) : ClientService<IMessageService>, IMessageService
     {
         private readonly string _name = name;
         private int? _lock;
 
         public async Task SendMessageAsync(int @lock, string message, CancellationToken cancellationToken)
         {
-            await Service.SendMessageAsync(@lock, message, cancellationToken);
+            await Server.SendMessageAsync(@lock, message, cancellationToken);
         }
 
         public async Task<int> LockAsync(CancellationToken cancellationToken)
         {
-            _lock = await Service.LockAsync(cancellationToken);
+            _lock = await Server.LockAsync(cancellationToken);
             return _lock.Value;
         }
 
         public async Task UnlockAsync(int @lock, CancellationToken cancellationToken)
         {
-            await Service.UnlockAsync(@lock, cancellationToken);
+            await Server.UnlockAsync(@lock, cancellationToken);
         }
     }
 }

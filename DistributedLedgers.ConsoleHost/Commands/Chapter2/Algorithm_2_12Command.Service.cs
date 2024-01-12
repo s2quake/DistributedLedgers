@@ -7,17 +7,17 @@ partial class Algorithm_2_12Command
 {
     public interface ICommandService
     {
-        [OperationContract]
+        [ServerMethod]
         Task SendCommandAsync(int ticket, string command, CancellationToken cancellationToken);
 
-        [OperationContract]
+        [ServerMethod]
         Task<int> RequestTicketAsync(CancellationToken cancellationToken);
 
-        [OperationContract]
+        [ServerMethod]
         Task ExecuteCommandAsync(CancellationToken cancellationToken);
     }
 
-    sealed class ServerMessageService(string name) : ServerServiceHost<ICommandService>, ICommandService
+    sealed class ServerMessageService(string name) : ServerService<ICommandService>, ICommandService
     {
         private static readonly object obj = new();
         private readonly string _name = name;
@@ -65,25 +65,25 @@ partial class Algorithm_2_12Command
         }
     }
 
-    sealed class ClientMessageService(string name) : ClientServiceHost<ICommandService>, ICommandService
+    sealed class ClientMessageService(string name) : ClientService<ICommandService>, ICommandService
     {
         private readonly string _name = name;
         private int _ticket;
 
         public async Task SendCommandAsync(int ticket, string command, CancellationToken cancellationToken)
         {
-            await Service.SendCommandAsync(ticket, command, cancellationToken);
+            await Server.SendCommandAsync(ticket, command, cancellationToken);
         }
 
         public async Task<int> RequestTicketAsync(CancellationToken cancellationToken)
         {
-            _ticket = await Service.RequestTicketAsync(cancellationToken);
+            _ticket = await Server.RequestTicketAsync(cancellationToken);
             return _ticket;
         }
 
         public async Task ExecuteCommandAsync(CancellationToken cancellationToken)
         {
-            await Service.ExecuteCommandAsync(cancellationToken);
+            await Server.ExecuteCommandAsync(cancellationToken);
         }
     }
 }

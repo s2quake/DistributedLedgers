@@ -8,19 +8,19 @@ sealed class CommitMessageCollection : IEnumerable<CommitMessage>
 
     public int Count => _itemList.Count;
 
-    public void Add(int v, int s, int n)
+    public void Add(int v, int s, int ni)
     {
         lock (_itemList)
         {
-            _itemList.Add(new(V: v, S: s, N: n));
+            _itemList.Add(new(V: v, S: s, Ni: ni));
         }
     }
 
-    public bool CanReply(int v, int s, int n, int minimum)
+    public bool CanReply(int v, int s, int ni, int minimum)
     {
         lock (_itemList)
         {
-            _itemList.Add(new(V: v, S: s, N: n));
+            _itemList.Add(new(V: v, S: s, Ni: ni));
             if (_itemList.Where(Compare).Count() >= minimum)
             {
                 _itemList.RemoveAll(Compare);

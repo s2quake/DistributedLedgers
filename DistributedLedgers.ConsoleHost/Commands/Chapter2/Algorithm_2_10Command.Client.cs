@@ -6,18 +6,18 @@ partial class Algorithm_2_10Command
 {
     sealed class Client : IAsyncDisposable
     {
-        private SimpleClient[] _senders = [];
+        private Common.Client[] _senders = [];
         private IMessageService[] _senderServices = [];
         private int?[] _locks = [];
 
         public static async Task<Client> CreateAsync(int[] serverPorts, CancellationToken cancellationToken)
         {
-            var senders = new SimpleClient[serverPorts.Length];
+            var senders = new Common.Client[serverPorts.Length];
             var senderServices = new ClientMessageService[serverPorts.Length];
             for (var i = 0; i < serverPorts.Length; i++)
             {
                 senderServices[i] = new ClientMessageService($"client {i}");
-                senders[i] = await SimpleClient.CreateAsync(serverPorts[i], senderServices[i], cancellationToken);
+                senders[i] = await Common.Client.CreateAsync(serverPorts[i], senderServices[i], cancellationToken);
             }
             return new Client
             {

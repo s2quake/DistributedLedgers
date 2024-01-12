@@ -9,14 +9,14 @@ partial class Algorithm_4_14Command
 {
     public interface INodeService
     {
-        [OperationContract]
+        [ServerMethod]
         Task ValueAsync(int nodeIndex, int value, CancellationToken cancellationToken);
 
-        [OperationContract]
+        [ServerMethod]
         Task ProposeAsync(int nodeIndex, int value, CancellationToken cancellationToken);
     }
 
-    sealed class ServerNodeService : ServerServiceHost<INodeService>, INodeService
+    sealed class ServerNodeService : ServerService<INodeService>, INodeService
     {
         private readonly ConcurrentDictionary<int, int> _valueByNodeIndex = new();
         private readonly ConcurrentDictionary<int, int> _proposeByNodeIndex = new();
@@ -46,16 +46,16 @@ partial class Algorithm_4_14Command
         }
     }
 
-    sealed class ClientNodeService : ClientServiceHost<INodeService>
+    sealed class ClientNodeService : ClientService<INodeService>
     {
         public async void Value(int nodeIndex, int value)
         {
-            await Service.ValueAsync(nodeIndex, value, CancellationToken.None);
+            await Server.ValueAsync(nodeIndex, value, CancellationToken.None);
         }
 
         public async void Propose(int nodeIndex, int value)
         {
-            await Service.ProposeAsync(nodeIndex, value, CancellationToken.None);
+            await Server.ProposeAsync(nodeIndex, value, CancellationToken.None);
         }
     }
 

@@ -6,11 +6,11 @@ partial class Algorithm_2_9Command
 {
     public interface IMessageService
     {
-        [OperationContract]
+        [ServerMethod]
         Task SendMessageAsync(int index, string message, CancellationToken cancellationToken);
     }
 
-    sealed class ServerMessageService(string name) : ServerServiceHost<IMessageService>, IMessageService
+    sealed class ServerMessageService(string name) : ServerService<IMessageService>, IMessageService
     {
         private readonly string _name = name;
         private readonly Dictionary<int, string> _messageByIndex = [];
@@ -28,13 +28,13 @@ partial class Algorithm_2_9Command
         }
     }
 
-    sealed class ClientMessageService(string name) : ClientServiceHost<IMessageService>, IMessageService
+    sealed class ClientMessageService(string name) : ClientService<IMessageService>, IMessageService
     {
         private readonly string _name = name;
 
         public async Task SendMessageAsync(int index, string message, CancellationToken cancellationToken)
         {
-            await Service.SendMessageAsync(index, message, cancellationToken);
+            await Server.SendMessageAsync(index, message, cancellationToken);
             // await Console.Out.WriteLineAsync($"{_name}: {message}");
         }
     }

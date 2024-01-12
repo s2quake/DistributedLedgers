@@ -23,7 +23,7 @@ sealed partial class Algorithm_2_13Command : CommandAsyncBase
             var serverPorts = PortUtility.GetPorts(serverCount);
             var serverServices = Enumerable.Range(0, serverCount).Select(item => new ServerMessageService($"server {item}")).ToArray();
             Out.WriteLine("Nodes initializing.");
-            await using var servers = await SimpleServer.CreateManyAsync(serverPorts, serverServices, cancellationToken);
+            await using var servers = await Server.CreateManyAsync(serverPorts, serverServices, cancellationToken);
             await using var clients = await Client.CreateManyAsync(clientCount, serverPorts, cancellationToken);
             Out.WriteLine("Nodes initialized.");
 

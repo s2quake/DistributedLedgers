@@ -18,34 +18,34 @@ sealed class Algorithm_2_3Command : CommandAsyncBase
     {
         var serverService = new ServerDataService();
         var clientService = new ClientDataService();
-        await using var server = await SimpleServer.CreateAsync(serverService, cancellationToken);
-        await using var client = await SimpleClient.CreateAsync(clientService, cancellationToken);
-        for (var i = 0; i < 10; i++)
+        await using var server = await Server.CreateAsync(serverService, cancellationToken);
+        await using var client = await Client.CreateAsync(clientService, cancellationToken);
+        Parallel.ForEach(Enumerable.Range(0, 100), i =>
         {
             clientService.SendMessage($"message {i}");
-        }
+        });
     }
 
     public interface IDataService
     {
-        [OperationContract]
+        [ServerMethod(IsOneWay = true)]
         void SendMessage(string message);
     }
 
-    sealed class ServerDataService : ServerServiceHost<IDataService>, IDataService
+    sealed class ServerDataService : ServerService<IDataService>, IDataService
     {
         public void SendMessage(string message)
         {
-            Console.Out.WriteLine($"server: {message}");
+            Console.WriteLine($"server receive: {message}");
         }
     }
 
-    sealed class ClientDataService : ClientServiceHost<IDataService>, IDataService
+    sealed class ClientDataService : ClientService<IDataService>, IDataService
     {
         public void SendMessage(string message)
         {
-            Console.Out.WriteLine($"client: {message}");
-            Service.SendMessage(message);
+            Server.SendMessage(message);
+            Console.WriteLine($"client send: {message}");
         }
     }
 }

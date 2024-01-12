@@ -7,14 +7,14 @@ partial class Algorithm_3_15Command
 {
     public interface INodeService
     {
-        [OperationContract]
+        [ServerMethod]
         Task ProposeAsync(int nodeId, bool? v, int round, CancellationToken cancellationToken);
 
-        [OperationContract]
+        [ServerMethod]
         Task MyValueAsync(int nodeId, bool v, int round, CancellationToken cancellationToken);
     }
 
-    sealed class ServerNodeService(string name) : ServerServiceHost<INodeService>, INodeService
+    sealed class ServerNodeService(string name) : ServerService<INodeService>, INodeService
     {
         private readonly string _name = name;
         private readonly ConcurrentDictionary<int, ConcurrentDictionary<int, bool>> _valuesByRound = new();
@@ -65,18 +65,18 @@ partial class Algorithm_3_15Command
         }
     }
 
-    sealed class ClientNodeService(string name) : ClientServiceHost<INodeService>
+    sealed class ClientNodeService(string name) : ClientService<INodeService>
     {
         private readonly string _name = name;
 
         public async void BroadcastMyValue(int nodeId, bool v, int round)
         {
-            await Service.MyValueAsync(nodeId, v, round, CancellationToken.None);
+            await Server.MyValueAsync(nodeId, v, round, CancellationToken.None);
         }
 
         public async void BroadcastPropose(int nodeId, bool? v, int round)
         {
-            await Service.ProposeAsync(nodeId, v, round, CancellationToken.None);
+            await Server.ProposeAsync(nodeId, v, round, CancellationToken.None);
         }
     }
 }

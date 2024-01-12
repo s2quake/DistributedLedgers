@@ -19,6 +19,7 @@ sealed class Algorithm_5_4Command : CommandAsyncBase
 
     protected override async Task OnExecuteAsync(CancellationToken cancellationToken, IProgress<ProgressInfo> progress)
     {
+        await Task.CompletedTask;
         var p = PrimeNumber == ulong.MaxValue ? GetOddNumber() : PrimeNumber;
         if (p % 2 == 0)
             throw new InvalidOperationException($"'{p}' is not odd number.");

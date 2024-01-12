@@ -6,12 +6,12 @@ partial class Algorithm_3_15Command
 {
     sealed class Node : IAsyncDisposable
     {
-        private readonly List<SimpleClient> _clientList = [];
-        private readonly Dictionary<SimpleClient, ClientNodeService> _clientServiceByClient = [];
-        private readonly SimpleServer _server;
+        private readonly List<Client> _clientList = [];
+        private readonly Dictionary<Client, ClientNodeService> _clientServiceByClient = [];
+        private readonly Server _server;
         private readonly ServerNodeService _serverService;
 
-        private Node(SimpleServer server, ServerNodeService serverService)
+        private Node(Server server, ServerNodeService serverService)
         {
             _server = server;
             _serverService = serverService;
@@ -24,7 +24,7 @@ partial class Algorithm_3_15Command
         public static async Task<Node> CreateAsync(int port, CancellationToken cancellationToken)
         {
             var service = new ServerNodeService($"server: {port}");
-            var server = await SimpleServer.CreateAsync(port, service, cancellationToken);
+            var server = await Server.CreateAsync(port, service, cancellationToken);
             return new Node(server, service);
         }
 
@@ -32,7 +32,7 @@ partial class Algorithm_3_15Command
         {
             var port = node.Port;
             var clientService = new ClientNodeService($"client: {port}");
-            var client = await SimpleClient.CreateAsync(port, clientService, cancellationToken);
+            var client = await Client.CreateAsync(port, clientService, cancellationToken);
             _clientList.Add(client);
             _clientServiceByClient.Add(client, clientService);
         }

@@ -18,8 +18,8 @@ sealed class Algorithm_2_5Command : CommandAsyncBase
     {
         var serverService = new ServerDataService();
         var clientService = new ClientDataService();
-        await using var server = await SimpleServer.CreateAsync(serverService, cancellationToken);
-        await using var client = await SimpleClient.CreateAsync(clientService, cancellationToken);
+        await using var server = await Server.CreateAsync(serverService, cancellationToken);
+        await using var client = await Client.CreateAsync(clientService, cancellationToken);
         var tryCount = 0;
         for (var i = 0; i < 10;)
         {
@@ -38,29 +38,29 @@ sealed class Algorithm_2_5Command : CommandAsyncBase
 
     public interface IDataService
     {
-        [OperationContract]
+        [ServerMethod]
         Task SendMessageAsync(string message, CancellationToken cancellationToken);
     }
 
-    public interface IDataServiceCallback
+    public interface IDataCallback
     {
-        [OperationContract]
+        [ClientMethod]
         void OnMessageSended(string message);
     }
 
-    sealed class ServerDataService : ServerServiceHost<IDataService, IDataServiceCallback>, IDataService
+    sealed class ServerDataService : ServerService<IDataService, IDataCallback>, IDataService
     {
         public async Task SendMessageAsync(string message, CancellationToken cancellationToken)
         {
             if (Random.Shared.Next() % 4 == 0)
             {
                 await Console.Out.WriteLineAsync($"server: {message}");
-                Callback.OnMessageSended(message);
+                Client.OnMessageSended(message);
             }
         }
     }
 
-    sealed class ClientDataService : ClientServiceHost<IDataService, IDataServiceCallback>, IDataServiceCallback
+    sealed class ClientDataService : ClientService<IDataService, IDataCallback>, IDataCallback
     {
         private readonly ManualResetEvent _manualResetEvent = new(initialState: false);
 
@@ -73,7 +73,7 @@ sealed class Algorithm_2_5Command : CommandAsyncBase
         {
             await Console.Out.WriteLineAsync($"client({tryCount}): {message}");
             _manualResetEvent.Reset();
-            await Service.SendMessageAsync(message, cancellationToken);
+            await Server.SendMessageAsync(message, cancellationToken);
             while (cancellationToken.IsCancellationRequested == false)
             {
                 if (_manualResetEvent.WaitOne(1) == true)

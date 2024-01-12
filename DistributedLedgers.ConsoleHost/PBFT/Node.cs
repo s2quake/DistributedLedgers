@@ -5,22 +5,21 @@ namespace DistributedLedgers.ConsoleHost.PBFT;
 sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
 {
     private readonly object _lockObject = new();
+    private readonly Dictionary<int, View> _viewByIndex = [];
     private View? _view;
     private readonly List<(int r, int c)> _requestMessageList = [];
     private readonly List<(int r, int c)> _replyMessageList = [];
     private bool _isEnd;
+    private int _f;
+    private int _n;
 
-    public (int r, int c)[] Value
-    {
-        get
-        {
-            return _replyMessageList.OrderBy(item => item.c).ToArray();
-        }
-    }
+    public (int r, int c)[] Value => [.. _replyMessageList.OrderBy(item => item.c)];
 
-    public void Initialize(int f)
+    public void Initialize(int n, int f)
     {
-        _view = new View(v: 0, f, this);
+        _n = n;
+        _f = f;
+        _view = new View(v: 0, n, f, this);
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -45,24 +44,51 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
         _view.RequestFromClient(r, c);
     }
 
-    internal async void OnRequest(int r, int c, int n)
+    internal async void OnRequest(int r, int c, int ni)
     {
-        await _view!.RequestFromBackupAsync(r, c, n, CancellationToken.None);
+        await _view!.RequestFromBackupAsync(r, c, ni, CancellationToken.None);
     }
 
-    internal void OnPrePrepare(int v, int s, int r, int n)
+    internal void OnPrePrepare(int v, int s, int r, int ni)
     {
-        _view!.PrePrepare(v, s, r, n);
+        if (_view is { } view && view.Index == v)
+        {
+            view.PrePrepare(v, s, r, ni);
+        }
     }
 
-    internal void OnPrepare(int v, int s, int r, int n)
+    internal void OnPrepare(int v, int s, int r, int ni)
     {
-        _view!.Prepare(v, s, r, n);
+        if (_view is { } view && view.Index == v)
+        {
+            view.Prepare(v, s, r, ni);
+        }
     }
 
-    internal void OnCommit(int v, int s, int n)
+    internal void OnCommit(int v, int s, int ni)
     {
-        _view!.Commit(v, s, n);
+        if (_view is { } view && view.Index == v)
+        {
+            view.Commit(v, s, ni);
+        }
+    }
+
+    internal void OnViewChange(int v, (int s, int r)[] Pb, int b)
+    {
+        if (_view != null)
+        {
+            _viewByIndex.Add(_view.Index, _view);
+        }
+        _view = new View(v, _n, _f, this);
+        _view.ViewChange(Pb);
+    }
+
+    internal void OnNewView(int v, int p, int ni)
+    {
+        lock (_lockObject)
+        {
+
+        }
     }
 
     internal void BroadcastPrePrepare(int v, int s, int r, int p)
@@ -87,21 +113,42 @@ sealed class Node : NodeBase<Node, NodeServerService, NodeClientService>
         });
     }
 
-    internal void BroadcastCommit(int v, int s, int n)
+    internal void BroadcastCommit(int v, int s, int ni)
     {
         Broadcast((node, service) =>
         {
             if (node != this)
             {
-                service.Commit(v, s, n);
+                service.Commit(v, s, ni);
             }
         });
     }
 
-    internal async Task SendRequestAsync(Node receiverNode, int r, int c, int n, CancellationToken cancellationToken)
+    internal void BroadcastNewView(int v, int p, int ni)
+    {
+        Broadcast((node, service) =>
+        {
+            service.NewView(v, p, ni);
+        });
+    }
+
+    internal void BroadcastViewChange(int v, (int s, int r)[] Pb, int b)
+    {
+        Broadcast((node, service) =>
+        {
+            service.ViewChange(v, Pb, b);
+        });
+    }
+
+    internal async Task SendRequestAsync(Node receiverNode, int r, int c, int ni, CancellationToken cancellationToken)
     {
         var service = GetClientService(receiverNode);
-        await service.RequestAsync(r, c, n, cancellationToken);
+        await service.RequestAsync(r, c, ni, cancellationToken);
+    }
+
+    internal void ViewChange(int v)
+    {
+
     }
 
     internal void Reply(int r, int c)

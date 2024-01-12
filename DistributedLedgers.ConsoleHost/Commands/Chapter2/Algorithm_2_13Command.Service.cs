@@ -1,5 +1,3 @@
-#pragma warning disable cSpell
-
 using JSSoft.Communication;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
@@ -8,23 +6,23 @@ partial class Algorithm_2_13Command
 {
     public interface ICommandService
     {
-        [OperationContract]
+        [ServerMethod]
         Task<bool> ProposeCommandAsync(int t, string c, CancellationToken cancellationToken);
 
-        [OperationContract]
+        [ServerMethod]
         Task<(int store, string? C)?> RequestTicketAsync(int t, CancellationToken cancellationToken);
 
-        [OperationContract]
+        [ServerMethod]
         Task ExecuteCommandAsync(string c, CancellationToken cancellationToken);
     }
 
-    sealed class ServerMessageService(string name) : ServerServiceHost<ICommandService>, ICommandService
+    sealed class ServerMessageService(string name) : ServerService<ICommandService>, ICommandService
     {
         private static readonly object obj = new();
         private readonly string _name = name;
         private string? _C;
-        private int _Tmax;
-        private int _Tstore;
+        private int _max;
+        private int _store;
         private readonly List<string> _executedList = [];
 
         public string[] ExecutedCommands => _executedList.ToArray();
@@ -33,14 +31,13 @@ partial class Algorithm_2_13Command
 
         public async Task<(int store, string? C)?> RequestTicketAsync(int ticket, CancellationToken cancellationToken)
         {
-            // await Task.Delay(Random.Shared.Next(100, 1000), cancellationToken);
             await Task.CompletedTask;
             lock (obj)
             {
-                if (ticket > _Tmax)
+                if (ticket > _max)
                 {
-                    _Tmax = ticket;
-                    return (_Tstore, _C);
+                    _max = ticket;
+                    return (_store, _C);
                 }
                 return null;
             }
@@ -48,14 +45,13 @@ partial class Algorithm_2_13Command
 
         public async Task<bool> ProposeCommandAsync(int t, string c, CancellationToken cancellationToken)
         {
-            // await Task.Delay(Random.Shared.Next(100, 1000), cancellationToken);
             await Task.CompletedTask;
             lock (obj)
             {
-                if (t == _Tmax)
+                if (t == _max)
                 {
                     _C = c;
-                    _Tstore = t;
+                    _store = t;
                     return true;
                 }
                 return false;
@@ -64,7 +60,6 @@ partial class Algorithm_2_13Command
 
         public async Task ExecuteCommandAsync(string c, CancellationToken cancellationToken)
         {
-            // await Task.Delay(Random.Shared.Next(100, 1000), cancellationToken);
             await Task.CompletedTask;
             lock (obj)
             {
@@ -74,23 +69,23 @@ partial class Algorithm_2_13Command
         }
     }
 
-    sealed class ClientMessageService(string name) : ClientServiceHost<ICommandService>, ICommandService
+    sealed class ClientMessageService(string name) : ClientService<ICommandService>, ICommandService
     {
         private readonly string _name = name;
 
         public async Task<bool> ProposeCommandAsync(int ticket, string command, CancellationToken cancellationToken)
         {
-            return await Service.ProposeCommandAsync(ticket, command, cancellationToken);
+            return await Server.ProposeCommandAsync(ticket, command, cancellationToken);
         }
 
         public async Task<(int, string?)?> RequestTicketAsync(int ticket, CancellationToken cancellationToken)
         {
-            return await Service.RequestTicketAsync(ticket, cancellationToken);
+            return await Server.RequestTicketAsync(ticket, cancellationToken);
         }
 
         public async Task ExecuteCommandAsync(string command, CancellationToken cancellationToken)
         {
-            await Service.ExecuteCommandAsync(command, cancellationToken);
+            await Server.ExecuteCommandAsync(command, cancellationToken);
         }
     }
 }

@@ -1,6 +1,5 @@
 
 using System.ComponentModel.Composition;
-using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Commands;
 using JSSoft.Terminals;
 
@@ -31,7 +30,7 @@ sealed partial class PBFT_Command : CommandAsyncBase
         var ports = PortUtility.GetPorts(n);
         await using var nodes = await PBFT.Node.CreateManyAsync(ports, f, cancellationToken);
         await Out.WriteLineAsync("============ agreement ============");
-        Parallel.ForEach(nodes, item => item.Initialize(f));
+        Parallel.ForEach(nodes, item => item.Initialize(n, f));
         for (var c = 0; c < 10; c++)
         {
             var r = Random.Shared.Next();

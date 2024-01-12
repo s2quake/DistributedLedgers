@@ -7,19 +7,19 @@ partial class Algorithm_2_9Command
 {
     sealed class Serializer : IAsyncDisposable
     {
-        private SimpleClient[] _senders = [];
-        private SimpleServer? _receiver;
+        private Client[] _senders = [];
+        private Server? _receiver;
 
         public static async Task<Serializer> CreateAsync(int port, int[] serverPorts, CancellationToken cancellationToken)
         {
-            var senders = new SimpleClient[serverPorts.Length];
+            var senders = new Client[serverPorts.Length];
             var senderServices = new SerializerSendService[serverPorts.Length];
             for (var i = 0; i < serverPorts.Length; i++)
             {
                 senderServices[i] = new SerializerSendService();
-                senders[i] = await SimpleClient.CreateAsync(serverPorts[i], senderServices[i], cancellationToken);
+                senders[i] = await Client.CreateAsync(serverPorts[i], senderServices[i], cancellationToken);
             }
-            var receiver = await SimpleServer.CreateAsync(port, new SerializerCallbackService(senderServices), cancellationToken);
+            var receiver = await Server.CreateAsync(port, new SerializerCallbackService(senderServices), cancellationToken);
             return new Serializer
             {
                 _senders = senders,
@@ -39,15 +39,15 @@ partial class Algorithm_2_9Command
         }
     }
 
-    sealed class SerializerSendService : ClientServiceHost<IMessageService>, IMessageService
+    sealed class SerializerSendService : ClientService<IMessageService>, IMessageService
     {
         public async Task SendMessageAsync(int index, string message, CancellationToken cancellationToken)
         {
-            await Service.SendMessageAsync(index, message, cancellationToken);
+            await Server.SendMessageAsync(index, message, cancellationToken);
         }
     }
 
-    sealed class SerializerCallbackService(IMessageService[] dataServices) : ServerServiceHost<IMessageService>, IMessageService
+    sealed class SerializerCallbackService(IMessageService[] dataServices) : ServerService<IMessageService>, IMessageService
     {
         private readonly IMessageService[] _dataServices = dataServices;
 

@@ -32,11 +32,11 @@ sealed partial class Algorithm_2_9Command : CommandAsyncBase
         var serverService1 = new ServerMessageService("server1");
         var serverService2 = new ServerMessageService("server2");
         Out.WriteLine("Nodes initializing.");
-        await using var server1 = await SimpleServer.CreateAsync(serverPorts[0], serverService1, cancellationToken);
-        await using var server2 = await SimpleServer.CreateAsync(serverPorts[1], serverService2, cancellationToken);
+        await using var server1 = await Server.CreateAsync(serverPorts[0], serverService1, cancellationToken);
+        await using var server2 = await Server.CreateAsync(serverPorts[1], serverService2, cancellationToken);
         await using var serializer = await Serializer.CreateAsync(serializerPort, serverPorts, cancellationToken);
-        await using var client1 = await SimpleClient.CreateAsync(serializerPort, clientService1, cancellationToken);
-        await using var client2 = await SimpleClient.CreateAsync(serializerPort, clientService2, cancellationToken);
+        await using var client1 = await Client.CreateAsync(serializerPort, clientService1, cancellationToken);
+        await using var client2 = await Client.CreateAsync(serializerPort, clientService2, cancellationToken);
         Out.WriteLine("Nodes initialized.");
 
         await Parallel.ForAsync(0, Sentences.Length, async (i, cancellationToken) =>

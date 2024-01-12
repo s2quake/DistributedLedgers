@@ -6,7 +6,7 @@ partial class Algorithm_2_13Command
 {
     sealed class Client : IAsyncDisposable
     {
-        private AsyncDisposableCollection<SimpleClient>? _senders;
+        private AsyncDisposableCollection<Common.Client>? _senders;
         private ICommandService[] _senderServices = [];
         private (int store, string? C)?[] _tickets = [];
         private bool[] _ready = [];
@@ -19,7 +19,7 @@ partial class Algorithm_2_13Command
             {
                 senderServices[i] = new ClientMessageService($"client {i}");
             }
-            var senders = await SimpleClient.CreateManyAsync(serverPorts, senderServices, cancellationToken);
+            var senders = await Common.Client.CreateManyAsync(serverPorts, senderServices, cancellationToken);
             return new Client
             {
                 _name = name,

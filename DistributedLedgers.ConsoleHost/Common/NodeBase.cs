@@ -1,4 +1,3 @@
-using DistributedLedgers.ConsoleHost.PBFT;
 using JSSoft.Communication;
 
 namespace DistributedLedgers.ConsoleHost.Common;
@@ -6,13 +5,13 @@ namespace DistributedLedgers.ConsoleHost.Common;
 abstract class NodeBase<T, TServerService, TClientService>
     : IAsyncDisposable
     where T : NodeBase<T, TServerService, TClientService>
-    where TServerService : class, IServiceHost
-    where TClientService : class, IServiceHost
+    where TServerService : class, IService
+    where TClientService : class, IService
 {
-    private readonly List<SimpleClient> _clientList = [];
+    private readonly List<Client> _clientList = [];
     private readonly Dictionary<T, TClientService> _clientServiceByNode = [];
     private readonly List<T> _nodeList = [];
-    private SimpleServer? _server;
+    private Server? _server;
     private TServerService? _serverService;
     private int _index = -1;
     private bool _isByzantine;
@@ -30,8 +29,8 @@ abstract class NodeBase<T, TServerService, TClientService>
         var node = (T)Activator.CreateInstance(typeof(T))!;
         var serverService = node.CreateServerService();
         var clientService = node.CreateClientService();
-        var server = await SimpleServer.CreateAsync(port, serverService, cancellationToken);
-        var client = await SimpleClient.CreateAsync(port, clientService, cancellationToken);
+        var server = await Server.CreateAsync(port, serverService, cancellationToken);
+        var client = await Client.CreateAsync(port, clientService, cancellationToken);
         node._server = server;
         node._serverService = serverService;
         node._index = index;
@@ -74,7 +73,7 @@ abstract class NodeBase<T, TServerService, TClientService>
     {
         var port = node.Port;
         var clientService = CreateClientService();
-        var client = await SimpleClient.CreateAsync(port, clientService, cancellationToken);
+        var client = await Client.CreateAsync(port, clientService, cancellationToken);
         lock (this)
         {
             _clientList.Add(client);

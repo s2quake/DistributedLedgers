@@ -8,11 +8,11 @@ partial class Algorithm_6_2Command
 {
     public interface INodeService
     {
-        [OperationContract]
+        [ServerMethod]
         Task ValueAsync(int nodeIndex, bool value, CancellationToken cancellationToken);
     }
 
-    sealed class ServerNodeService : ServerServiceHost<INodeService>, INodeService
+    sealed class ServerNodeService : ServerService<INodeService>, INodeService
     {
         private readonly ConcurrentDictionary<int, bool> _valueByNodeIndex = [];
 
@@ -29,11 +29,11 @@ partial class Algorithm_6_2Command
         }
     }
 
-    sealed class ClientNodeService : ClientServiceHost<INodeService>
+    sealed class ClientNodeService : ClientService<INodeService>
     {
         public async void Value(int nodeIndex, bool value)
         {
-            await Service.ValueAsync(nodeIndex, value, CancellationToken.None);
+            await Server.ValueAsync(nodeIndex, value, CancellationToken.None);
         }
     }
 

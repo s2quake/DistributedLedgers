@@ -17,12 +17,12 @@ sealed partial class Algorithm_2_12Command : CommandAsyncBase
         var serverCount = 4;
         var serverPorts = PortUtility.GetPorts(serverCount);
         var serverServices = new ServerMessageService[serverCount];
-        await using var servers = new AsyncDisposableCollection<SimpleServer>(capacity: serverCount);
+        await using var servers = new AsyncDisposableCollection<Server>(capacity: serverCount);
         Out.WriteLine("Nodes initializing.");
         for (var i = 0; i < serverCount; i++)
         {
             serverServices[i] = new ServerMessageService($"server{i}");
-            servers.Add(await SimpleServer.CreateAsync(serverPorts[i], serverServices[i], cancellationToken));
+            servers.Add(await Server.CreateAsync(serverPorts[i], serverServices[i], cancellationToken));
         }
         var clientCount = 3;
         await using var clients = new AsyncDisposableCollection<Client>(capacity: clientCount);

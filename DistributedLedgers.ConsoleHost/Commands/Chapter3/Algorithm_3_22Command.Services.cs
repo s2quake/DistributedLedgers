@@ -7,20 +7,20 @@ partial class Algorithm_3_22Command
 {
     public interface INodeService
     {
-        [OperationContract]
+        [ServerMethod]
         Task ProposeAsync(int nodeId, bool? v, int round, CancellationToken cancellationToken);
 
-        [OperationContract]
+        [ServerMethod]
         Task MyValueAsync(int nodeId, bool v, int round, CancellationToken cancellationToken);
 
-        [OperationContract]
+        [ServerMethod]
         Task MyCoinAsync(int nodeId, bool c, CancellationToken cancellationToken);
 
-        [OperationContract]
+        [ServerMethod]
         Task MySetAsync(int nodeId, bool[] cu, CancellationToken cancellationToken);
     }
 
-    sealed class ServerNodeService(string name) : ServerServiceHost<INodeService>, INodeService
+    sealed class ServerNodeService(string name) : ServerService<INodeService>, INodeService
     {
         private readonly string _name = name;
         private readonly ConcurrentDictionary<int, ConcurrentDictionary<int, bool>> _valuesByRound = new();
@@ -117,28 +117,28 @@ partial class Algorithm_3_22Command
         }
     }
 
-    sealed class ClientNodeService(string name) : ClientServiceHost<INodeService>
+    sealed class ClientNodeService(string name) : ClientService<INodeService>
     {
         private readonly string _name = name;
 
         public async void BroadcastMyValue(int nodeId, bool v, int round)
         {
-            await Service.MyValueAsync(nodeId, v, round, CancellationToken.None);
+            await Server.MyValueAsync(nodeId, v, round, CancellationToken.None);
         }
 
         public async void BroadcastPropose(int nodeId, bool? v, int round)
         {
-            await Service.ProposeAsync(nodeId, v, round, CancellationToken.None);
+            await Server.ProposeAsync(nodeId, v, round, CancellationToken.None);
         }
 
         public async void BroadcastMyCoin(int nodeId, bool c)
         {
-            await Service.MyCoinAsync(nodeId, c, CancellationToken.None);
+            await Server.MyCoinAsync(nodeId, c, CancellationToken.None);
         }
 
         public async void BroadcastMySet(int nodeId, bool[] cu)
         {
-            await Service.MySetAsync(nodeId, cu, CancellationToken.None);
+            await Server.MySetAsync(nodeId, cu, CancellationToken.None);
         }
     }
 }

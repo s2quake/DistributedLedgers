@@ -8,11 +8,11 @@ partial class Algorithm_4_21Command
 {
     public interface INodeService
     {
-        [OperationContract]
+        [ServerMethod]
         Task ProposeAsync(bool value, int round, CancellationToken cancellationToken);
     }
 
-    sealed class NodeServerService : ServerServiceHost<INodeService>, INodeService
+    sealed class NodeServerService : ServerService<INodeService>, INodeService
     {
         private readonly ConcurrentDictionary<int, ConcurrentBag<bool>> _proposesByRound = new();
 
@@ -35,11 +35,11 @@ partial class Algorithm_4_21Command
         }
     }
 
-    sealed class NodeClientService : ClientServiceHost<INodeService>
+    sealed class NodeClientService : ClientService<INodeService>
     {
         public async void Propose(bool value, int round)
         {
-            await Service.ProposeAsync(value, round, CancellationToken.None);
+            await Server.ProposeAsync(value, round, CancellationToken.None);
         }
     }
 
