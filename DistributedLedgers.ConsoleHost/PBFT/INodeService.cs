@@ -17,7 +17,7 @@ public interface INodeService
     void Commit(int v, int s, int ni);
 
     [ServerMethod(IsOneWay = true)]
-    void ViewChange(int v, (int s, int r)[] Pb, int b);
+    void ViewChange(int v, (int s, int r)[] Pb1, (int s, int r)[] Pb2, int b);
 
     [ServerMethod(IsOneWay = true)]
     void NewView(int v, int p, int ni);

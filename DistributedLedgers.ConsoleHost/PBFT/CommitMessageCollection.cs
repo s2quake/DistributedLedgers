@@ -8,14 +8,14 @@ sealed class CommitMessageCollection : IEnumerable<CommitMessage>
 
     public int Count => _itemList.Count;
 
-    public void Add(int v, int s, int ni)
+    public void Add(int s)
     {
-        _itemList.Add(new(V: v, S: s, Ni: ni));
+        _itemList.Add(new(S: s));
     }
 
-    public bool CanReply(int v, int s, int ni, int minimum)
+    public bool CanReply(int s, int minimum)
     {
-        _itemList.Add(new(V: v, S: s, Ni: ni));
+        _itemList.Add(new(S: s));
         if (_itemList.Where(Compare).Count() >= minimum)
         {
             // _itemList.RemoveAll(Compare);
@@ -23,7 +23,7 @@ sealed class CommitMessageCollection : IEnumerable<CommitMessage>
         }
         return false;
 
-        bool Compare(CommitMessage item) => item.V == v && item.S == s;
+        bool Compare(CommitMessage item) => item.S == s;
     }
 
     #region IEnumerable

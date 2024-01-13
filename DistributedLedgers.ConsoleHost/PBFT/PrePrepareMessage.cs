@@ -1,3 +1,3 @@
-namespace DistributedLedgers.ConsoleHost.PBFT;
+// namespace DistributedLedgers.ConsoleHost.PBFT;
 
-record PrePrepareMessage(int V, int S, int R, int P);
+// record PrePrepareMessage(int S, int R);

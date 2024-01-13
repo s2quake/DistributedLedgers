@@ -8,12 +8,19 @@ sealed class PrepareMessageCollection : IEnumerable<PrepareMessage>
 
     public int Count => _itemList.Count;
 
-    public void Add(int v, int s, int r)
+    public void Add(int s, int r)
     {
-        _itemList.Add(new(V: v, S: s, R: r));
+        _itemList.Add(new(S: s, R: r));
     }
 
-    public bool CanCommit(int v, int s, int r, int minimum)
+    public bool Contains(int s, int r)
+    {
+        return _itemList.Any(Compare) == true;
+
+        bool Compare(PrepareMessage item) => item.S == s && item.R == r;
+    }
+
+    public bool CanCommit(int s, int r, int minimum)
     {
         if (_itemList.Where(Compare).Count() >= minimum)
         {
@@ -21,20 +28,20 @@ sealed class PrepareMessageCollection : IEnumerable<PrepareMessage>
         }
         return false;
 
-        bool Compare(PrepareMessage item) => item.V == v && item.S == s && item.R == r;
+        bool Compare(PrepareMessage item) => item.S == s && item.R == r;
     }
 
-    public (int r, int s)[] Collect()
+    public (int s, int r)[] Collect()
     {
-        return [.. _itemList.Select(item => (item.R, item.S))];
+        return [.. _itemList.Select(item => (item.S, item.R))];
     }
 
-    public void AddRange(int v, (int r, int s)[] Pb)
+    public void AddRange((int r, int s)[] Pb)
     {
         for (var i = 0; i < Pb.Length; i++)
         {
             var (r, s) = Pb[i];
-            _itemList.Add(new(V: v, S: s, R: r));
+            _itemList.Add(new(S: s, R: r));
         }
     }
 

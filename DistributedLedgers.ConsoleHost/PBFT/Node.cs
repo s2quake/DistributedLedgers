@@ -143,7 +143,7 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
 
 
     private List<(int s, int r)> _V = new();
-    void INodeService.ViewChange(int v, (int s, int r)[] Pb, int b)
+    void INodeService.ViewChange(int v, (int s, int r)[] Pb1, (int s, int r)[] Pb2, int b)
     {
         lock (_lockObject)
         {
@@ -155,7 +155,7 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
                 // _view = new View(v, _endPoints, _f, this, _broadcaster);
             }
 
-            _V.AddRange(Pb);
+            _V.AddRange(Pb1);
             int qewr = 0;
         }
         // {

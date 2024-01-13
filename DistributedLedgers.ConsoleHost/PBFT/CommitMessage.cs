@@ -1,3 +1,3 @@
 namespace DistributedLedgers.ConsoleHost.PBFT;
 
-record CommitMessage(int V, int S, int Ni);
+record CommitMessage(int S);
