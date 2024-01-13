@@ -15,10 +15,8 @@ sealed class PrepareMessageCollection : IEnumerable<PrepareMessage>
 
     public bool CanCommit(int v, int s, int r, int minimum)
     {
-        _itemList.Add(new(V: v, S: s, R: r));
         if (_itemList.Where(Compare).Count() >= minimum)
         {
-            // _itemList.RemoveAll(Compare);
             return true;
         }
         return false;

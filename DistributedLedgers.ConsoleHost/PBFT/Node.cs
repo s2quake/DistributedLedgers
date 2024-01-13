@@ -56,55 +56,6 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         }
     }
 
-    // internal void BroadcastPrePrepare(int v, int s, int r, int p)
-    // {
-    //     SendAll((node, service) =>
-    //     {
-    //         if (node != EndPoint)
-    //         {
-    //             service.PrePrepare(v, s, r, p);
-    //         }
-    //     });
-    // }
-
-    // internal void BroadcastPrepare(int v, int s, int r, int b)
-    // {
-    //     SendAll((node, service) =>
-    //     {
-    //         if (node != EndPoint)
-    //         {
-    //             service.Prepare(v, s, r, b);
-    //         }
-    //     });
-    // }
-
-    // internal void BroadcastCommit(int v, int s, int ni)
-    // {
-    //     SendAll((node, service) =>
-    //     {
-    //         if (node != EndPoint)
-    //         {
-    //             service.Commit(v, s, ni);
-    //         }
-    //     });
-    // }
-
-    // internal void BroadcastNewView(int v, int p, int ni)
-    // {
-    //     SendAll((node, service) =>
-    //     {
-    //         service.NewView(v, p, ni);
-    //     });
-    // }
-
-    // internal void BroadcastViewChange(int v, (int s, int r)[] Pb, int b)
-    // {
-    //     SendAll((node, service) =>
-    //     {
-    //         service.ViewChange(v, Pb, b);
-    //     });
-    // }
-
     internal Task SendRequestAsync(EndPoint endPoint, int v, int r, int c, int ni, CancellationToken cancellationToken)
     {
         return SendAsync(endPoint, (service, cancellationToken) => service.RequestAsync(v, r, c, ni, cancellationToken), cancellationToken);
