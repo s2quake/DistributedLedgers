@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Net.Sockets;
 using JSSoft.Communication;

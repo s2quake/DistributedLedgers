@@ -2,11 +2,12 @@ using System.ComponentModel.Composition;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Commands;
 using JSSoft.Terminals;
-using JSSoft.Communication.Threading;
+using System.ComponentModel;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 [Export(typeof(ICommand))]
+[Category("Chapter 2")]
 sealed partial class Algorithm_2_13Command : CommandAsyncBase
 {
     public Algorithm_2_13Command()

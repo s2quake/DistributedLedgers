@@ -1,12 +1,13 @@
 
+using System.ComponentModel;
 using System.ComponentModel.Composition;
-using System.Xml.Serialization;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Commands;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter5;
 
 [Export(typeof(ICommand))]
+[Category("Chapter 5")]
 sealed class Algorithm_5_4Command : CommandAsyncBase
 {
     public Algorithm_5_4Command()

@@ -42,7 +42,7 @@ sealed class Client : ClientContext, IAsyncDisposable
         }
         catch
         {
-            await AbortAsync(_token);
+            await AbortAsync();
         }
     }
 }

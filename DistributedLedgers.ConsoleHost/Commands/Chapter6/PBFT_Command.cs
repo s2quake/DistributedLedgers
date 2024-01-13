@@ -1,4 +1,5 @@
 
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using JSSoft.Commands;
 using JSSoft.Terminals;
@@ -6,6 +7,7 @@ using JSSoft.Terminals;
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter4;
 
 [Export(typeof(ICommand))]
+[Category("Chapter 6")]
 sealed partial class PBFT_Command : CommandAsyncBase
 {
     public PBFT_Command()

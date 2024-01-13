@@ -1,4 +1,5 @@
 
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Net;
 using JSSoft.Commands;
@@ -7,6 +8,7 @@ using JSSoft.Terminals;
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter3;
 
 [Export(typeof(ICommand))]
+[Category("Chapter 3")]
 sealed partial class Algorithm_3_15Command : CommandAsyncBase
 {
     public Algorithm_3_15Command()

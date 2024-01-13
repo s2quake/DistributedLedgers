@@ -3,10 +3,12 @@ using System.ComponentModel.Composition;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
 using JSSoft.Commands;
+using System.ComponentModel;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 [Export(typeof(ICommand))]
+[Category("Chapter 2")]
 sealed class Algorithm_2_5Command : CommandAsyncBase
 {
     public Algorithm_2_5Command()

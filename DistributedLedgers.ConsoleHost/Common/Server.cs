@@ -42,7 +42,7 @@ sealed class Server : ServerContext, IAsyncDisposable
         }
         catch
         {
-            await AbortAsync(_token);
+            await AbortAsync();
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Commands;
@@ -6,6 +7,7 @@ using JSSoft.Terminals;
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 
 [Export(typeof(ICommand))]
+[Category("Chapter 2")]
 sealed partial class Algorithm_2_9Command : CommandAsyncBase
 {
     public static readonly string[] Sentences =

@@ -3,7 +3,6 @@ using System.Collections.Immutable;
 using System.Net;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
-using Newtonsoft.Json.Converters;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter4;
 

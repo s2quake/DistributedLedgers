@@ -1,5 +1,4 @@
 using System.Net;
-using DistributedLedgers.ConsoleHost.Common;
 
 namespace DistributedLedgers.ConsoleHost.Commands.Chapter2;
 

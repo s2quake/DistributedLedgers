@@ -1,3 +1,6 @@
 [submodule ".communication"]
 	path = .communication
 	url = https://github.com/s2quake/communication.git
+[submodule ".commands"]
+	path = .commands
+	url = https://github.com/s2quake/commands.git
