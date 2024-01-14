@@ -8,9 +8,9 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
 {
     private readonly object _lockObject = new();
     private readonly Dictionary<int, View> _viewByIndex = [];
-    private readonly List<(int r, int c)> _requestMessageList = [];
-    private readonly List<(int r, int c)> _replyMessageList = [];
-    private View? _view;
+    private readonly Dictionary<int, int> _clientByRequest = [];
+    private readonly List<int> _replyList = [];
+    private View _view;
     private bool _isEnd;
     private int _f;
     private EndPoint[] _endPoints = [];
@@ -19,9 +19,10 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
     public Node()
     {
         _broadcaster = new(this);
+        _view = new View(v: -1, [], f: 0, this, _broadcaster);
     }
 
-    public (int r, int c)[] Value => [.. _replyMessageList.OrderBy(item => item.c)];
+    public (int r, int c)[] Value => [.. _clientByRequest.Select(item => (item.Key, item.Value))];
 
     public void Initialize(EndPoint[] endPoints, int f)
     {
@@ -48,7 +49,7 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
 
         lock (_lockObject)
         {
-            _requestMessageList.Add((r, c));
+            _clientByRequest.Add(r, c);
             if (_view is { } view)
             {
                 view.Dispatcher.InvokeAsync(() => view.RequestFromClient(r, c));
@@ -66,13 +67,13 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
 
     }
 
-    internal void Reply(int r, int c)
+    internal void Reply(int r)
     {
         lock (_lockObject)
         {
-            _requestMessageList.Remove((r, c));
-            _replyMessageList.Add((r, c));
-            _isEnd = _requestMessageList.Count == 0;
+            _clientByRequest.Remove(r);
+            _replyList.Add(r);
+            _isEnd = _clientByRequest.Count == 0;
         }
     }
 
@@ -119,57 +120,65 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
 
     void INodeService.PrePrepare(int v, int s, int r, int p)
     {
-        if (_view is { } view && view.Index == v)
+        lock (_lockObject)
         {
-            view.Dispatcher.InvokeAsync(() => view.PrePrepare(v, s, r, p));
+            if (_view is { } view && view.Index == v)
+            {
+                view.Dispatcher.InvokeAsync(() => view.PrePrepare(v, s, r, p));
+            }
         }
     }
 
     void INodeService.Prepare(int v, int s, int r, int b)
     {
-        if (_view is { } view && view.Index == v)
+        lock (_lockObject)
         {
-            view.Dispatcher.InvokeAsync(() => view.Prepare(v, s, r, b));
+            if (_view is { } view && view.Index == v)
+            {
+                view.Dispatcher.InvokeAsync(() => view.Prepare(v, s, r, b));
+            }
         }
     }
 
     void INodeService.Commit(int v, int s, int ni)
     {
-        if (_view is { } view && view.Index == v)
+        lock (_lockObject)
         {
-            view.Dispatcher.InvokeAsync(() => view.Commit(v, s, ni));
+            if (_view is { } view && view.Index == v)
+            {
+                view.Dispatcher.InvokeAsync(() => view.Commit(v, s, ni));
+            }
         }
     }
 
-
-    private List<(int s, int r)> _V = new();
-    void INodeService.ViewChange(int v, (int s, int r)[] Pb1, (int s, int r)[] Pb2, int b)
+    void INodeService.ViewChange(int v1, (int s, int r)[] Pb, int b)
     {
         lock (_lockObject)
         {
-            if (_view is { } view && view.Index != v)
+            if (_view is { } view && view.Index == v1 - 1)
             {
-                Console.WriteLine($"view change: {v}");
-                _viewByIndex.Add(view.Index, view);
-                _view = null;
-                // _view = new View(v, _endPoints, _f, this, _broadcaster);
+                view.Dispatcher.InvokeAsync(() => view.ViewChange(v1, Pb, b));
             }
-
-            _V.AddRange(Pb1);
-            int qewr = 0;
         }
-        // {
-        //     if (_view is { } view && view.Index == v)
-        //     {
-        //         view.Dispatcher.InvokeAsync(() => view.ViewChange(Pb));
-        //     }
-        // }
     }
 
-    void INodeService.NewView(int v, int p, int ni)
+    void INodeService.NewView(int v1, (int s, int r)[] V, (int s, int r)[] O, int p)
     {
+        lock (_lockObject)
+        {
+            var items = _clientByRequest.Select(item => (r: item.Key, c: item.Value)).ToArray();
+            _viewByIndex.Add(_view.Index, _view);
+            _view = new View(v1, _endPoints, _f, this, _broadcaster);
+            _view.Dispatcher.InvokeAsync(() =>
+            {
+                _view.NewView(v1, V, O, p);
+                foreach (var (r, c) in items)
+                {
+                    _view.RequestFromClient(r: r, c: c);
+                }
+            });
+        }
 
+        #endregion
     }
-
-    #endregion
 }

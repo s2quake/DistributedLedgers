@@ -5,6 +5,7 @@ namespace DistributedLedgers.ConsoleHost.PBFT;
 sealed class PrepareMessageCollection : IEnumerable<PrepareMessage>
 {
     private readonly List<PrepareMessage> _itemList = [];
+    private int _s;
 
     public int Count => _itemList.Count;
 
@@ -43,6 +44,21 @@ sealed class PrepareMessageCollection : IEnumerable<PrepareMessage>
             var (r, s) = Pb[i];
             _itemList.Add(new(S: s, R: r));
         }
+    }
+
+    public PrepareMessage[] Collect(int s)
+    {
+        var itemList = new List<PrepareMessage>(_itemList.Count);
+        for (var i = _itemList.Count - 1; i >= 0; i--)
+        {
+            var item = _itemList[i];
+            if (item.S > _s && item.S <= s)
+            {
+                itemList.Add(item);
+            }
+        }
+        _s = s;
+        return [.. itemList.Distinct().OrderBy(item => item.S)];
     }
 
     #region IEnumerable

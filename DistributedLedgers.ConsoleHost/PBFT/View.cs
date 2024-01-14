@@ -14,15 +14,17 @@ sealed class View : IDisposable
     private readonly int _ni;
     private readonly Node _node;
     private readonly IBroadcaster _broadcaster;
-    private readonly EndPoint _endPoint;
-    private readonly RequestMessageCollection _requestMessages = [];
+
     private readonly PrepareMessageCollection _prePrepareMessages = [];
     private readonly PrepareMessageCollection _prepareMessages = [];
-    private readonly PrepareMessageCollection _cerificateMessages = [];
+    private readonly PrepareMessageCollection _certificateMessages = [];
+    private readonly PrepareMessageCollection _viewChangeMessages = [];
     private readonly CommitMessageCollection _commitMessages = [];
+    private readonly HashSet<int> _replyMessages = [];
     private readonly Dispatcher _dispatcher;
     private bool _isDisposed;
     private int _s;
+    private bool _isFaulted;
 
     public View(int v, EndPoint[] endPoints, int f, Node node, IBroadcaster broadcaster)
     {
@@ -30,10 +32,9 @@ sealed class View : IDisposable
         _endPoints = endPoints;
         _f = f;
         _ni = node.Index;
-        _p = _v % _endPoints.Length;
+        _p = _endPoints.Length != 0 ? _v % _endPoints.Length : -1;
         _node = node;
         _broadcaster = broadcaster;
-        _endPoint = node.EndPoint;
         _dispatcher = new(this);
     }
 
@@ -52,22 +53,39 @@ sealed class View : IDisposable
         return $"{_node}";
     }
 
+    // private async void Time_TimerCallback(object? state)
+    // {
+    //     _timer?.Dispose();
+    //     _timer = null;
+    //     await _dispatcher.InvokeAsync(() =>
+    //     {
+    //         var v = _v;
+    //         var Pb = _certificateMessages.Collect();
+    //         var b = _ni;
+    //         _isFaulted = true;
+    //         _broadcaster.SendAll(service => service.ViewChange(v + 1, Pb, b));
+    //     });
+    // }
+
     public void RequestFromClient(int r, int c)
     {
         _dispatcher.VerifyAccess();
-        Console.WriteLine($"{this} Request: r={r}, c={c}");
-        var isPrimary = IsPrimary;
-        var ni = _ni;
+        Console.WriteLine($"{this} Request: r={r}");
 
-        var s = Interlocked.Increment(ref _s);
-        _requestMessages.Add(r: r, c: c, s: s);
+        if (_isFaulted == true)
+            return;
+
+        var isPrimary = IsPrimary;
+        var v = _v;
+        var ni = _ni;
+        var s = ++_s;
         if (isPrimary == true)
         {
-            _broadcaster.SendAll(service => service.PrePrepare(_v, s, r, p: ni), predicate: IsNotMe);
+            _broadcaster.SendAll(service => service.PrePrepare(v: v, s: s, r: r, p: ni), predicate: IsNotMe);
         }
         else
         {
-            // SendRequestToPrimary(_v, r, c, ni);
+            SendRequestToPrimary(_v, r, c, ni);
         }
     }
 
@@ -78,15 +96,16 @@ sealed class View : IDisposable
 
     public void PrePrepare(int v, int s, int r, int p)
     {
-        Console.WriteLine($"{this} PrePrepare: v={v}, s={s}, r={r}, p={p}");
         _dispatcher.VerifyAccess();
         if (v != _v)
             throw new InvalidOperationException();
         if (p != _p)
             throw new InvalidOperationException();
+        if (_isFaulted == true)
+            return;
 
+        // Console.WriteLine($"{this} PrePrepare: v={v}, s={s}, r={r}, p={p}");
         var b = _ni;
-
         if (IsPrimaryNode(ni: p) == true && _prePrepareMessages.Contains(s: s, r: r) == false)
         {
             _prePrepareMessages.Add(s: s, r: r);
@@ -97,19 +116,21 @@ sealed class View : IDisposable
 
     public void Prepare(int v, int s, int r, int b)
     {
-        Console.WriteLine($"{this} Prepare: v={v}, s={s}, r={r}, n={b}");
         _dispatcher.VerifyAccess();
         if (v != _v)
             throw new InvalidOperationException();
         if (b == _p)
             throw new InvalidOperationException();
+        if (_isFaulted == true)
+            return;
 
+        // Console.WriteLine($"{this} Prepare: v={v}, s={s}, r={r}, n={b}");
         var minimum = 2 * _f;
         var ni = _ni;
         _prepareMessages.Add(s: s, r: r);
         if (_prepareMessages.CanCommit(s: s, r: r, minimum) == true)
         {
-            _cerificateMessages.Add(s: s, r: r);
+            _certificateMessages.Add(s: s, r: r);
             _commitMessages.Add(s: s);
             _broadcaster.SendAll(service => service.Commit(v, s, _node.Index), predicate: IsNotMe);
         }
@@ -117,44 +138,90 @@ sealed class View : IDisposable
 
     public void Commit(int v, int s, int ni)
     {
-        Console.WriteLine($"{this} Commit: v={v}, s={s}, n={ni}");
         _dispatcher.VerifyAccess();
         if (v != _v)
             throw new InvalidOperationException();
         if (ni == _ni)
             throw new InvalidOperationException();
+        if (_isFaulted == true)
+            return;
 
+        // Console.WriteLine($"{this} Commit: v={v}, s={s}, n={ni}");
         var minimum = 2 * _f + 1;
         if (_commitMessages.CanReply(s: s, minimum) == true)
         {
-            var items = _requestMessages.Remove(s: s);
+            var items = _certificateMessages.Collect(s: s);
             for (var i = 0; i < items.Length; i++)
             {
                 var item = items[i];
-                _node.Reply(item.R, item.C);
-                // Console.WriteLine($"{this} Reply: v={v}, s={item.S}, r={item.R}, c={item.C}");
+                _node.Reply(item.R);
+                Console.WriteLine($"{this} Reply: v={v}, s={item.S}, r={item.R}");
             }
         }
     }
 
-    private int _vc = 0;
-    public void ViewChange((int s, int r)[] Pb1, (int s, int r)[] Pb2)
+    private int _vc;
+    public void ViewChange(int v1, (int s, int r)[] Pb, int b)
     {
         _dispatcher.VerifyAccess();
-        _prePrepareMessages.AddRange(Pb1);
-        _prepareMessages.AddRange(Pb2);
+        if (v1 != _v + 1)
+            throw new InvalidOperationException();
+
+        Console.WriteLine($"{this} ViewChange: v1={v1}, b={b}");
+        _isFaulted = true;
+        _viewChangeMessages.AddRange(Pb);
         _vc++;
 
         var minimum = 2 * _f + 1;
-        if (_vc == minimum)
+        if (_vc != minimum)
+            return;
+        var isPrimary = v1 % _endPoints.Length == _ni;
+        if (isPrimary == true)
         {
-            var isPrimary = IsPrimary;
-            if (isPrimary == true)
-            {
-                // var maximumS = _prePrepareMessages.GetMaximumS();
+            var prePrepares = _prePrepareMessages.ToArray();
+            var prepares = _prepareMessages.ToArray();
+            var certificates = _certificateMessages.ToArray();
 
-                int qwrwqer = 0;
+            var maximumS = _prePrepareMessages.Max(item => item.S);
+            var o = _prePrepareMessages.ToLookup(item => item.S);
+
+            for (var i = maximumS - 1; i >= 0; i--)
+            {
+                if (o.Contains(i) == false)
+                {
+                    _prePrepareMessages.Add(s: i, r: int.MinValue);
+                }
             }
+            var V = _viewChangeMessages.Collect();
+            var O = _prePrepareMessages.Collect();
+            var p = _ni;
+
+            _broadcaster.SendAll(item => item.NewView(v1, V, O, p));
+        }
+
+        return;
+    }
+
+    public void NewView(int v, (int s, int r)[] V, (int s, int r)[] O, int p)
+    {
+        _dispatcher.VerifyAccess();
+        if (v != _v)
+            throw new InvalidOperationException();
+        if (p != _p)
+            throw new InvalidOperationException();
+
+        Console.WriteLine($"{this} NewView: v1={v}, p={p}");
+        _certificateMessages.AddRange(V);
+        _prePrepareMessages.AddRange(V);
+        if (IsPrimary == true)
+        {
+            var maximumS = _prePrepareMessages.Max(item => item.S);
+            _s = _prePrepareMessages.Max(item => item.S);
+            // _broadcaster.SendAll(service => service.PrePrepare(_, s, r, b), predicate: IsNotMe);
+        }
+        else
+        {
+            // SendRequestToPrimary(_v, r, ni);
         }
     }
 
@@ -169,24 +236,30 @@ sealed class View : IDisposable
 
     private async void SendRequestToPrimary(int v, int r, int c, int ni)
     {
-        // var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+        // var timeOut = TimeSpan.FromMilliseconds(Random.Shared.Next(1000, 1100));
+        // var cancellationTokenSource = new CancellationTokenSource(timeOut);
         // try
         // {
-        //     await _node.SendRequestAsync(_primaryEndPoint, _v, r, c, ni, cancellationTokenSource.Token);
+        //     var primaryEndPoint = _endPoints[_p];
+        //     await _node.SendRequestAsync(primaryEndPoint, _v, r, c, _ni, cancellationTokenSource.Token);
         // }
-        // catch
+        // catch (Exception e)
+
         {
-            await Task.Delay(Random.Shared.Next(100, 200));
+            await Task.Delay(Random.Shared.Next(1000, 1100), CancellationToken.None);
             await _dispatcher.InvokeAsync(() =>
             {
-                var v = _v;
-                var Pb1 = _prePrepareMessages.Collect();
-                var Pb2 = _prepareMessages.Collect();
-                var b = _ni;
-                _broadcaster.SendAll(service => service.ViewChange(v + 1, Pb1, Pb2, b));
+                if (_isFaulted == false)
+                {
+                    var v = _v;
+                    var Pb = _certificateMessages.Collect();
+                    var b = _ni;
+                    _isFaulted = true;
+                    _broadcaster.SendAll(service => service.ViewChange(v + 1, Pb, b));
+                }
             });
         }
     }
 
-    private bool IsNotMe(EndPoint endPoint) => endPoint != _endPoint;
+    private bool IsNotMe(EndPoint endPoint) => endPoint != _node.EndPoint;
 }
