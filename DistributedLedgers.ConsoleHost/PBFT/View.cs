@@ -70,7 +70,7 @@ sealed class View : IDisposable
     public void RequestFromClient(int r, int c)
     {
         _dispatcher.VerifyAccess();
-        Console.WriteLine($"{this} Request: r={r}");
+        Console.WriteLine($"{this} _v={_v} Request: r={r}");
 
         if (_isFaulted == true)
             return;
@@ -182,7 +182,7 @@ sealed class View : IDisposable
             var prepares = _prepareMessages.ToArray();
             var certificates = _certificateMessages.ToArray();
 
-            var maximumS = _prePrepareMessages.Max(item => item.S);
+            var maximumS = _prePrepareMessages.Count > 0 ? _prePrepareMessages.Max(item => item.S) : 0;
             var o = _prePrepareMessages.ToLookup(item => item.S);
 
             for (var i = maximumS - 1; i >= 0; i--)
@@ -215,8 +215,7 @@ sealed class View : IDisposable
         _prePrepareMessages.AddRange(V);
         if (IsPrimary == true)
         {
-            var maximumS = _prePrepareMessages.Max(item => item.S);
-            _s = _prePrepareMessages.Max(item => item.S);
+            _s =_prePrepareMessages.Count > 0 ? _prePrepareMessages.Max(item => item.S) : 0;
             // _broadcaster.SendAll(service => service.PrePrepare(_, s, r, b), predicate: IsNotMe);
         }
         else
@@ -236,17 +235,17 @@ sealed class View : IDisposable
 
     private async void SendRequestToPrimary(int v, int r, int c, int ni)
     {
-        // var timeOut = TimeSpan.FromMilliseconds(Random.Shared.Next(1000, 1100));
-        // var cancellationTokenSource = new CancellationTokenSource(timeOut);
-        // try
-        // {
-        //     var primaryEndPoint = _endPoints[_p];
-        //     await _node.SendRequestAsync(primaryEndPoint, _v, r, c, _ni, cancellationTokenSource.Token);
-        // }
-        // catch (Exception e)
-
+        var timeOut = TimeSpan.FromMilliseconds(Random.Shared.Next(200, 500));
+        var cancellationTokenSource = new CancellationTokenSource(timeOut);
+        try
         {
-            await Task.Delay(Random.Shared.Next(1000, 1100), CancellationToken.None);
+            var primaryEndPoint = _endPoints[_p];
+            await _node.SendRequestAsync(primaryEndPoint, _v, r, c, _ni, cancellationTokenSource.Token);
+        }
+        catch (Exception e)
+        {
+            // Console.WriteLine(e.Message);
+            // await Task.Delay(Random.Shared.Next(1000, 1100), CancellationToken.None);
             await _dispatcher.InvokeAsync(() =>
             {
                 if (_isFaulted == false)

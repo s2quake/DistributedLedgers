@@ -33,7 +33,7 @@ sealed partial class PBFT_Command : CommandAsyncBase
         await using var nodes = await PBFT.Node.CreateManyAsync(endPoints, f, cancellationToken);
         await Out.WriteLineAsync("============ agreement ============");
         Parallel.ForEach(nodes, item => item.Initialize(endPoints, f));
-        var requestTasks = Enumerable.Range(0, 10).Select(c => Task.Run(async () =>
+        var requestTasks = Enumerable.Range(0, 3).Select(c => Task.Run(async () =>
         {
             var r = Random.Shared.Next();
             foreach (var item in nodes)

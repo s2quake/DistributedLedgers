@@ -9,6 +9,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".communication", ".communic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSSoft.Communication", ".communication\JSSoft.Communication\JSSoft.Communication.csproj", "{A0FCB26C-63E8-4675-B966-5EDC1CFBAC6B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".configurations", ".configurations", "{23526E46-19B0-4D29-B098-0A97BA2533E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSSoft.Configurations", ".configurations\JSSoft.Configurations\JSSoft.Configurations.csproj", "{6B978883-9F5F-448C-9904-4769F5DA80CB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,11 +27,16 @@ Global
 		{A0FCB26C-63E8-4675-B966-5EDC1CFBAC6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0FCB26C-63E8-4675-B966-5EDC1CFBAC6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0FCB26C-63E8-4675-B966-5EDC1CFBAC6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B978883-9F5F-448C-9904-4769F5DA80CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B978883-9F5F-448C-9904-4769F5DA80CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B978883-9F5F-448C-9904-4769F5DA80CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B978883-9F5F-448C-9904-4769F5DA80CB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A0FCB26C-63E8-4675-B966-5EDC1CFBAC6B} = {2F68A5B5-9CAF-4710-A4CF-55A5158EB701}
+		{6B978883-9F5F-448C-9904-4769F5DA80CB} = {23526E46-19B0-4D29-B098-0A97BA2533E4}
 	EndGlobalSection
 EndGlobal

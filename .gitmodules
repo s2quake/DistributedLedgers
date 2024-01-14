@@ -4,3 +4,6 @@
 [submodule ".commands"]
 	path = .commands
 	url = https://github.com/s2quake/commands.git
+[submodule ".configurations"]
+	path = .configurations
+	url = ../configurations.git
