@@ -29,7 +29,7 @@ sealed partial class PBFT_Command : CommandAsyncBase
         var n = NodeCount;
         var r = RequestCount;
         // var f = ByzantineUtility.GetByzantineCount(n, (n, f) => n == 3 * f + 1);
-        var f = 0;
+        var f = 1;
         var endPoints = PortUtility.GetEndPoints(n);
         await using var nodes = await PBFT.Node.CreateManyAsync(endPoints, f, cancellationToken);
         await Out.WriteLineAsync("============ agreement ============");

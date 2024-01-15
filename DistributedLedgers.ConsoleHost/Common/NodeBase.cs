@@ -97,7 +97,7 @@ abstract class NodeBase<T, TService>
 
     protected void SendAll(Action<TService> action, Predicate<EndPoint> predicate)
     {
-        if (IsByzantine == false || Random.Shared.Next() % 2 == 0)
+        // if (IsByzantine == false || Random.Shared.Next() % 2 == 0)
         {
             Parallel.ForEach(_clientServiceByEndPoint.Where(item => predicate(item.Key)), item => action.Invoke(item.Value));
         }

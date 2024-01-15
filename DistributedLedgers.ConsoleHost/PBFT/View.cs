@@ -60,10 +60,11 @@ sealed class View : IDisposable
         var isPrimary = IsPrimary;
         var v = _v;
         var ni = _ni;
-        var s = ++_s;
+        var s = _s;
         if (isPrimary == true)
         {
             _broadcaster.SendAll(service => service.PrePrepare(v: v, s: s, r: r, p: ni), predicate: IsNotMe);
+            _s++;
         }
         // else
         // {
@@ -122,10 +123,10 @@ sealed class View : IDisposable
         if (_commitMessages.CanReply(s: s, minimum) == true)
         {
             var item = _certificateMessages.First(item => item.S == s);
-            if (_node.Reply(item.R) == true)
-            {
-                Console.WriteLine($"{this} Reply: v={v}, s={item.S}, r={item.R}");
-            }
+            _node.Reply(this, s, item.R);
+            // {
+            //     Console.WriteLine($"{this} Reply: v={v}, s={item.S}, r={item.R}");
+            // }
         }
     }
 

@@ -10,19 +10,20 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
     private readonly Dictionary<int, View> _viewByIndex = [];
     private readonly Dictionary<int, int> _clientByRequest2 = [];
     private readonly Dictionary<int, int> _clientByRequest = [];
-    private readonly List<(int, int)> _replyList = [];
+    private readonly List<(int, int)?> _replyList = [];
     private int _v = -1;
     private bool _isEnd;
     private int _f;
     private EndPoint[] _endPoints = [];
     private readonly Broadcaster _broadcaster;
+    private int _s;
 
     public Node()
     {
         _broadcaster = new(this);
     }
 
-    public (int r, int c)[] Value => [.. _replyList.Select(item => (item.Item1, item.Item2))];
+    public (int r, int c)[] Value => [.. _replyList.Select(item => (item!.Value.Item1, item!.Value.Item2))];
 
     public void Initialize(EndPoint[] endPoints, int f)
     {
@@ -53,6 +54,7 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
             {
                 _clientByRequest2.Add(r, c);
                 _clientByRequest.Add(r, c);
+                _replyList.Add(null);
                 view.RequestFromClient(r, c);
             });
         }
@@ -63,16 +65,20 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         return SendAsync(endPoint, (service, cancellationToken) => service.RequestAsync(v, r, c, ni, cancellationToken), cancellationToken);
     }
 
-    internal bool Reply(int r)
+    internal void Reply(View view, int s, int r)
     {
         if (_clientByRequest.ContainsKey(r) == true)
         {
-            _replyList.Add((r, _clientByRequest[r]));
+            _replyList[s] = (r, _clientByRequest[r]);
             _clientByRequest.Remove(r);
-            _isEnd = _clientByRequest.Count == 0;
-            return true;
         }
-        return false;
+
+        while(_s < _replyList.Count && _replyList[_s] is {} item)
+        {
+            Console.WriteLine($"{view} Reply: v={view.Index}, s={item.Item1}, r={item.Item2}");
+            _s++;
+        }
+        _isEnd = _s == _replyList.Count;
     }
 
     protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
