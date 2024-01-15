@@ -63,15 +63,16 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         return SendAsync(endPoint, (service, cancellationToken) => service.RequestAsync(v, r, c, ni, cancellationToken), cancellationToken);
     }
 
-    internal void Reply(int r)
+    internal bool Reply(int r)
     {
         if (_clientByRequest.ContainsKey(r) == true)
         {
-            int qewr = 0;
-        _replyList.Add((r, _clientByRequest[r]));
-        _clientByRequest.Remove(r);
-        _isEnd = _clientByRequest.Count == 0;
+            _replyList.Add((r, _clientByRequest[r]));
+            _clientByRequest.Remove(r);
+            _isEnd = _clientByRequest.Count == 0;
+            return true;
         }
+        return false;
     }
 
     protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
@@ -128,6 +129,7 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
 
     async void INodeService.PrePrepare(int v, int s, int r, int p)
     {
+        // Console.WriteLine($"{this}: INodeService.PrePrepare 1");
         if (GetView(v) is { } view)
         {
             await view.Dispatcher.InvokeAsync(() => view.PrePrepare(v, s, r, p));
@@ -136,10 +138,12 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         {
             throw new NotImplementedException();
         }
+        // Console.WriteLine($"{this}: INodeService.PrePrepare 2");
     }
 
     async void INodeService.Prepare(int v, int s, int r, int b)
     {
+        // Console.WriteLine($"{this}: INodeService.Prepare 1");
         if (GetView(v) is { } view)
         {
             await view.Dispatcher.InvokeAsync(() => view.Prepare(v, s, r, b));
@@ -148,10 +152,12 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         {
             throw new NotImplementedException();
         }
+        // Console.WriteLine($"{this}: INodeService.Prepare 2");
     }
 
     async void INodeService.Commit(int v, int s, int ni)
     {
+        // Console.WriteLine($"{this}: INodeService.Commit 1");
         if (GetView(v) is { } view)
         {
             await view.Dispatcher.InvokeAsync(() => view.Commit(v, s, ni));
@@ -160,10 +166,12 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         {
             throw new NotImplementedException();
         }
+        // Console.WriteLine($"{this}: INodeService.Commit 2");
     }
 
     async void INodeService.ViewChange(int v1, (int s, int r)[] Pb, int b)
     {
+        // Console.WriteLine($"{this}: INodeService.ViewChange 1");
         if (GetView(v1 - 1) is { } view)
         {
             await view.Dispatcher.InvokeAsync(() => view.ViewChange(v1, Pb, b));
@@ -172,6 +180,7 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         {
             throw new NotImplementedException();
         }
+        // Console.WriteLine($"{this}: INodeService.ViewChange 2");
     }
 
     async void INodeService.NewView(int v1, (int s, int r)[] V, (int s, int r)[] O, int p)

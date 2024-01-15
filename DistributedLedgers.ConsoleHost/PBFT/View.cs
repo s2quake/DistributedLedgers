@@ -23,6 +23,7 @@ sealed class View : IDisposable
     private readonly Dispatcher _dispatcher;
     public bool _isDisposed;
     private int _s;
+    private int _s1;
 
     public View(int v, EndPoint[] endPoints, int f, Node node, IBroadcaster broadcaster)
     {
@@ -64,10 +65,10 @@ sealed class View : IDisposable
         {
             _broadcaster.SendAll(service => service.PrePrepare(v: v, s: s, r: r, p: ni), predicate: IsNotMe);
         }
-        else
-        {
-            SendRequestToPrimary(_v, r, c, ni);
-        }
+        // else
+        // {
+        //     SendRequestToPrimary(_v, r, c, ni);
+        // }
     }
 
     public void PrePrepare(int v, int s, int r, int p)
@@ -120,12 +121,10 @@ sealed class View : IDisposable
         var minimum = 2 * _f + 1;
         if (_commitMessages.CanReply(s: s, minimum) == true)
         {
-            var items = _certificateMessages.Collect(s: s);
-            for (var i = 0; i < items.Length; i++)
+            var item = _certificateMessages.First(item => item.S == s);
+            if (_node.Reply(item.R) == true)
             {
-                var item = items[i];
                 Console.WriteLine($"{this} Reply: v={v}, s={item.S}, r={item.R}");
-                _node.Reply(item.R);
             }
         }
     }
@@ -148,7 +147,7 @@ sealed class View : IDisposable
         var isPrimary = v1 % _endPoints.Length == _ni;
         if (isPrimary == true)
         {
-            var maximumS = _prePrepareMessages.GetS();
+            var maximumS = _prePrepareMessages.Max(item => item.S);
             var o = _prePrepareMessages.ToLookup(item => item.S);
 
             for (var i = maximumS; i > 0; i--)
@@ -187,7 +186,12 @@ sealed class View : IDisposable
         _prePrepareMessages.AddRange(V);
         _isNew = true;
         _s = _prePrepareMessages.Count > 0 ? _prePrepareMessages.Max(item => item.S) : 0;
-        _certificateMessages.SetS(_s);
+        // _certificateMessages.SetS(_s);
+        _s1 = _s;
+        if (_s > 0)
+        {
+            int qwer = 0;
+        }
     }
 
     public void Dispose()

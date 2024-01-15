@@ -5,7 +5,6 @@ namespace DistributedLedgers.ConsoleHost.PBFT;
 sealed class PrepareMessageCollection : IEnumerable<PrepareMessage>
 {
     private readonly List<PrepareMessage> _itemList = [];
-    private int _s;
 
     public int Count => _itemList.Count;
 
@@ -46,32 +45,26 @@ sealed class PrepareMessageCollection : IEnumerable<PrepareMessage>
         }
     }
 
-    public PrepareMessage[] Collect(int s)
+    public (int s, int r) GetRequest(int s)
     {
-        if (s > _s)
+        var item = _itemList.First(item => item.S == s);
+        return (item.S, item.R);
+    }
+
+    public PrepareMessage[] Collect(int s1, int s2)
+    {
+        var itemList = new List<PrepareMessage>(_itemList.Count);
+        for (var i = _itemList.Count - 1; i >= 0; i--)
         {
-            var itemList = new List<PrepareMessage>(_itemList.Count);
-            for (var i = _itemList.Count - 1; i >= 0; i--)
+            var item = _itemList[i];
+            if (item.S > s1 && item.S <= s2 && item.R != int.MinValue)
             {
-                var item = _itemList[i];
-                if (item.S > _s && item.S <= s && item.R != int.MinValue)
-                {
-                    itemList.Add(item);
-                }
+                itemList.Add(item);
             }
-
-            _s = s;
-            return [.. itemList.Distinct().OrderBy(item => item.S)];
         }
-        return [];
-    }
 
-    public void SetS(int s)
-    {
-        _s = s;
+        return [.. itemList.Distinct().OrderBy(item => item.S)];
     }
-
-    public int GetS() => _s;
 
     #region IEnumerable
 
