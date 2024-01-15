@@ -89,7 +89,7 @@ abstract class NodeBase<T, TService>
     public override string ToString()
     {
         var byzantine = _isByzantine == true ? "😡" : "😀";
-        return $"{byzantine} Node({_index + 1})";
+        return $"{byzantine} Node({_index})";
     }
 
     protected void SendAll(Action<TService> action)
@@ -97,7 +97,7 @@ abstract class NodeBase<T, TService>
 
     protected void SendAll(Action<TService> action, Predicate<EndPoint> predicate)
     {
-        // if (IsByzantine == false || Random.Shared.Next() % 2 == 0)
+        if (IsByzantine == false)
         {
             Parallel.ForEach(_clientServiceByEndPoint.Where(item => predicate(item.Key)), item => action.Invoke(item.Value));
         }

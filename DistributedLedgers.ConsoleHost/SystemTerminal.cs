@@ -15,6 +15,7 @@ sealed class SystemTerminal : SystemTerminalBase
         _commandContext = commandContext;
         _commandContext.Owner = application;
         Prompt = "Distributed Ledgers $ ";
+        DetailErrorMessage = true;
     }
 
     protected override string FormatPrompt(string prompt)

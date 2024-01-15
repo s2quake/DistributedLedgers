@@ -24,6 +24,8 @@ sealed class View : IDisposable
     public bool _isDisposed;
     private int _s;
     private int _s1;
+    private readonly Dictionary<int, Timer> _timerByR = new();
+    private bool _isFaulted;
 
     public View(int v, EndPoint[] endPoints, int f, Node node, IBroadcaster broadcaster)
     {
@@ -66,10 +68,30 @@ sealed class View : IDisposable
             _broadcaster.SendAll(service => service.PrePrepare(v: v, s: s, r: r, p: ni), predicate: IsNotMe);
             _s++;
         }
-        // else
-        // {
-        //     SendRequestToPrimary(_v, r, c, ni);
-        // }
+        else
+        {
+            _timerByR.Add(r, new Timer(Time_TimerCallback, r, 1000, int.MaxValue));
+        }
+    }
+
+    private async void Time_TimerCallback(object? state)
+    {
+        if (state is int r)
+        {
+            _timerByR[r].Dispose();
+        }
+        await _dispatcher.InvokeAsync(() =>
+        {
+            if (_isFaulted != true)
+            {
+                var v = _v;
+                var Pb = _certificateMessages.Collect();
+                var b = _ni;
+                Console.WriteLine($"{this} Broadcast ViewChange, r={state}");
+                _isFaulted = true;
+                _broadcaster.SendAll(service => service.ViewChange(v + 1, Pb, b));
+            }
+        });
     }
 
     public void PrePrepare(int v, int s, int r, int p)
@@ -123,10 +145,16 @@ sealed class View : IDisposable
         if (_commitMessages.CanReply(s: s, minimum) == true)
         {
             var item = _certificateMessages.First(item => item.S == s);
-            _node.Reply(this, s, item.R);
-            // {
-            //     Console.WriteLine($"{this} Reply: v={v}, s={item.S}, r={item.R}");
-            // }
+            var rr = _node.Reply(this, s, item.R);
+            for (var i = 0; i < rr.Length; i++)
+            {
+                var r = rr[i];
+                if (_timerByR.ContainsKey(r) == true)
+                {
+                    _timerByR[r].Dispose();
+                    _timerByR.Remove(r);
+                }
+            }
         }
     }
 
@@ -148,7 +176,7 @@ sealed class View : IDisposable
         var isPrimary = v1 % _endPoints.Length == _ni;
         if (isPrimary == true)
         {
-            var maximumS = _prePrepareMessages.Max(item => item.S);
+            var maximumS = _prePrepareMessages.Count != 0 ? _prePrepareMessages.Max(item => item.S) : 0;
             var o = _prePrepareMessages.ToLookup(item => item.S);
 
             for (var i = maximumS; i > 0; i--)
@@ -204,28 +232,28 @@ sealed class View : IDisposable
         _isDisposed = true;
     }
 
-    private async void SendRequestToPrimary(int v, int r, int c, int ni)
-    {
-        var timeOut = TimeSpan.FromMilliseconds(Random.Shared.Next(200, 500));
-        var cancellationTokenSource = new CancellationTokenSource(timeOut);
-        try
-        {
-            var primaryEndPoint = _endPoints[_p];
-            await _node.SendRequestAsync(primaryEndPoint, _v, r, c, _ni, cancellationTokenSource.Token);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-            await _dispatcher.InvokeAsync(() =>
-            {
-                var v = _v;
-                var Pb = _certificateMessages.Collect();
-                var b = _ni;
-                Console.WriteLine("Broadcast ViewChange");
-                _broadcaster.SendAll(service => service.ViewChange(v + 1, Pb, b));
-            });
-        }
-    }
+    // private async void SendRequestToPrimary(int v, int r, int c, int ni)
+    // {
+    //     var timeOut = TimeSpan.FromMilliseconds(Random.Shared.Next(200, 500));
+    //     var cancellationTokenSource = new CancellationTokenSource(timeOut);
+    //     try
+    //     {
+    //         var primaryEndPoint = _endPoints[_p];
+    //         await _node.SendRequestAsync(primaryEndPoint, _v, r, c, _ni, cancellationTokenSource.Token);
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         Console.WriteLine(e.Message);
+    //         await _dispatcher.InvokeAsync(() =>
+    //         {
+    //             var v = _v;
+    //             var Pb = _certificateMessages.Collect();
+    //             var b = _ni;
+    //             Console.WriteLine($"{this} Broadcast ViewChange");
+    //             _broadcaster.SendAll(service => service.ViewChange(v + 1, Pb, b));
+    //         });
+    //     }
+    // }
 
     private bool IsNotMe(EndPoint endPoint) => endPoint != _node.EndPoint;
 

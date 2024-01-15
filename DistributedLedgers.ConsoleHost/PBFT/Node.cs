@@ -1,6 +1,7 @@
 using System.Net;
 using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Communication;
+using JSSoft.Terminals;
 
 namespace DistributedLedgers.ConsoleHost.PBFT;
 
@@ -10,7 +11,7 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
     private readonly Dictionary<int, View> _viewByIndex = [];
     private readonly Dictionary<int, int> _clientByRequest2 = [];
     private readonly Dictionary<int, int> _clientByRequest = [];
-    private readonly List<(int, int)?> _replyList = [];
+    private readonly List<(int r, int c)?> _replyList = [];
     private int _v = -1;
     private bool _isEnd;
     private int _f;
@@ -23,7 +24,24 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         _broadcaster = new(this);
     }
 
-    public (int r, int c)[] Value => [.. _replyList.Select(item => (item!.Value.Item1, item!.Value.Item2))];
+    public (int r, int c)[] Value
+    {
+        get
+        {
+            try
+            {
+                return [.. _replyList.Select(item => (item!.Value.r, item!.Value.c))];
+            }
+            catch
+            {
+                foreach (var item in _replyList)
+                {
+                    Console.WriteLine($"{item}");
+                }
+                throw;
+            }
+        }
+    }
 
     public void Initialize(EndPoint[] endPoints, int f)
     {
@@ -65,20 +83,29 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         return SendAsync(endPoint, (service, cancellationToken) => service.RequestAsync(v, r, c, ni, cancellationToken), cancellationToken);
     }
 
-    internal void Reply(View view, int s, int r)
+    internal int[] Reply(View view, int s, int r)
     {
         if (_clientByRequest.ContainsKey(r) == true)
         {
+            while (s > _replyList.Count)
+            {
+                _replyList.Add(null);
+            }
             _replyList[s] = (r, _clientByRequest[r]);
             _clientByRequest.Remove(r);
         }
-
-        while(_s < _replyList.Count && _replyList[_s] is {} item)
+        var rr = new List<int>();
+        while (_s < _replyList.Count && _replyList[_s] is { } item)
         {
-            Console.WriteLine($"{view} Reply: v={view.Index}, s={item.Item1}, r={item.Item2}");
+            Console.WriteLine($"{view}" + TerminalStringBuilder.GetString($"Reply: v={view.Index}, s={_s}, c={item.c}, r={item.r}", TerminalColorType.Yellow));
+            rr.Add(item.r);
             _s++;
         }
-        _isEnd = _s == _replyList.Count;
+        if (_s > s)
+        {
+            _isEnd = _clientByRequest2.Count == _replyList.Count && _replyList.Any(item => item is null) != true;
+        }
+        return rr.ToArray();
     }
 
     protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
