@@ -6,16 +6,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\.communication\JSSoft.Communication\JSSoft.Communication.csproj" />
-    <Reference Include="JSSoft.Commands.dll">
-      <HintPath>..\.communication\Assemblies\JSSoft.Commands.dll</HintPath>
-    </Reference>
-    <Reference Include="JSSoft.Terminals.dll">
-      <HintPath>..\.communication\Assemblies\JSSoft.Terminals.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\.configurations\JSSoft.Configurations\JSSoft.Configurations.csproj" />
+    <ProjectReference Include="..\.commands\JSSoft.Terminals\JSSoft.Terminals.csproj" />
+    <ProjectReference Include="..\.commands\JSSoft.Commands\JSSoft.Commands.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

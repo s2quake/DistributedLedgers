@@ -18,8 +18,8 @@ sealed partial class PBFT_Command : CommandAsyncBase
     [CommandPropertyRequired(DefaultValue = 4)]
     public int NodeCount { get; set; }
 
-    [CommandProperty("repeat", 'r', InitValue = 1)]
-    public int RepeatCount { get; set; }
+    [CommandProperty("request", 'r', InitValue = 4)]
+    public int RequestCount { get; set; }
 
     protected override async Task OnExecuteAsync(CancellationToken cancellationToken, IProgress<ProgressInfo> progress)
     {
@@ -27,13 +27,14 @@ sealed partial class PBFT_Command : CommandAsyncBase
         // while (r-- > 0 && cancellationToken.IsCancellationRequested != true)
         // {
         var n = NodeCount;
+        var r = RequestCount;
         // var f = ByzantineUtility.GetByzantineCount(n, (n, f) => n == 3 * f + 1);
         var f = 0;
         var endPoints = PortUtility.GetEndPoints(n);
         await using var nodes = await PBFT.Node.CreateManyAsync(endPoints, f, cancellationToken);
         await Out.WriteLineAsync("============ agreement ============");
         Parallel.ForEach(nodes, item => item.Initialize(endPoints, f));
-        var requestTasks = Enumerable.Range(0, 3).Select(c => Task.Run(async () =>
+        var requestTasks = Enumerable.Range(0, r).Select(c => Task.Run(async () =>
         {
             var r = Random.Shared.Next();
             foreach (var item in nodes)

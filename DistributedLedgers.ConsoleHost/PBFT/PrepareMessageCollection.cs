@@ -37,29 +37,41 @@ sealed class PrepareMessageCollection : IEnumerable<PrepareMessage>
         return [.. _itemList.Select(item => (item.S, item.R))];
     }
 
-    public void AddRange((int r, int s)[] Pb)
+    public void AddRange((int s, int r)[] Pb)
     {
         for (var i = 0; i < Pb.Length; i++)
         {
-            var (r, s) = Pb[i];
+            var (s, r) = Pb[i];
             _itemList.Add(new(S: s, R: r));
         }
     }
 
     public PrepareMessage[] Collect(int s)
     {
-        var itemList = new List<PrepareMessage>(_itemList.Count);
-        for (var i = _itemList.Count - 1; i >= 0; i--)
+        if (s > _s)
         {
-            var item = _itemList[i];
-            if (item.S > _s && item.S <= s)
+            var itemList = new List<PrepareMessage>(_itemList.Count);
+            for (var i = _itemList.Count - 1; i >= 0; i--)
             {
-                itemList.Add(item);
+                var item = _itemList[i];
+                if (item.S > _s && item.S <= s && item.R != int.MinValue)
+                {
+                    itemList.Add(item);
+                }
             }
+
+            _s = s;
+            return [.. itemList.Distinct().OrderBy(item => item.S)];
         }
-        _s = s;
-        return [.. itemList.Distinct().OrderBy(item => item.S)];
+        return [];
     }
+
+    public void SetS(int s)
+    {
+        _s = s;
+    }
+
+    public int GetS() => _s;
 
     #region IEnumerable
 

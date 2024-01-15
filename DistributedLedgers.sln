@@ -13,6 +13,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".configurations", ".configu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSSoft.Configurations", ".configurations\JSSoft.Configurations\JSSoft.Configurations.csproj", "{6B978883-9F5F-448C-9904-4769F5DA80CB}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".commands", ".commands", "{B03F95D9-FE77-4BD7-A70F-E5C4FA0937A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSSoft.Commands", ".commands\JSSoft.Commands\JSSoft.Commands.csproj", "{E9D8499F-F395-4682-AB43-E92753076EBA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSSoft.Terminals", ".commands\JSSoft.Terminals\JSSoft.Terminals.csproj", "{EFCF8D2B-EF2B-42E2-B089-BF0D93520D24}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +37,14 @@ Global
 		{6B978883-9F5F-448C-9904-4769F5DA80CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6B978883-9F5F-448C-9904-4769F5DA80CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6B978883-9F5F-448C-9904-4769F5DA80CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9D8499F-F395-4682-AB43-E92753076EBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9D8499F-F395-4682-AB43-E92753076EBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9D8499F-F395-4682-AB43-E92753076EBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9D8499F-F395-4682-AB43-E92753076EBA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EFCF8D2B-EF2B-42E2-B089-BF0D93520D24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFCF8D2B-EF2B-42E2-B089-BF0D93520D24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFCF8D2B-EF2B-42E2-B089-BF0D93520D24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFCF8D2B-EF2B-42E2-B089-BF0D93520D24}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -38,5 +52,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{A0FCB26C-63E8-4675-B966-5EDC1CFBAC6B} = {2F68A5B5-9CAF-4710-A4CF-55A5158EB701}
 		{6B978883-9F5F-448C-9904-4769F5DA80CB} = {23526E46-19B0-4D29-B098-0A97BA2533E4}
+		{E9D8499F-F395-4682-AB43-E92753076EBA} = {B03F95D9-FE77-4BD7-A70F-E5C4FA0937A2}
+		{EFCF8D2B-EF2B-42E2-B089-BF0D93520D24} = {B03F95D9-FE77-4BD7-A70F-E5C4FA0937A2}
 	EndGlobalSection
 EndGlobal
