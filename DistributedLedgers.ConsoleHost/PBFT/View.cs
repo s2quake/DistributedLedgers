@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text;
 using JSSoft.Communication.Threading;
 using JSSoft.Terminals;
 using IBroadcaster = DistributedLedgers.ConsoleHost.Common.IBroadcaster<DistributedLedgers.ConsoleHost.PBFT.Node, DistributedLedgers.ConsoleHost.PBFT.INodeService>;
@@ -22,11 +21,12 @@ sealed class View : IDisposable
     private readonly PrepareMessageCollection _viewChangeMessages = [];
     private readonly CommitMessageCollection _commitMessages = [];
     private readonly Dispatcher _dispatcher;
-    public bool _isDisposed;
+    private bool _isDisposed;
     private int _s;
-    private int _s1;
     private readonly Dictionary<int, Timer> _timerByR = new();
     private bool _isFaulted;
+    private bool _isNew;
+    private int _vc;
 
     public View(int v, EndPoint[] endPoints, int f, Node node, IBroadcaster broadcaster)
     {
@@ -51,8 +51,8 @@ sealed class View : IDisposable
     public override string ToString()
     {
         if (_v == _ni)
-            return TerminalStringBuilder.GetString($"{_node}", TerminalColorType.Green);
-        return $"{_node}";
+            return TerminalStringBuilder.GetString($"p{_node}", TerminalColorType.Green);
+        return $" {_node}";
     }
 
     public void OnRequest(int r, int c)
@@ -89,10 +89,6 @@ sealed class View : IDisposable
         await _dispatcher.InvokeAsync(() =>
         {
             var r = (int)state!;
-            // if (_timerByR.ContainsKey(r) == true)
-            // {
-            //     _timerByR[r].Dispose();
-            // }
             if (_isFaulted != true && _timerByR.ContainsKey(r) == true)
             {
                 _timerByR[r].Dispose();
@@ -134,8 +130,6 @@ sealed class View : IDisposable
         _dispatcher.VerifyAccess();
         if (v != _v)
             throw new InvalidOperationException();
-        // if (b == _ni)
-        //     throw new InvalidOperationException();
 
         var minimum = 2 * _f;
         var ni = _ni;
@@ -144,7 +138,6 @@ sealed class View : IDisposable
         if (_prepareMessages.CanCommit(s: s, r: r, minimum) == true && _certificateMessages.Contains(s: s, r: r) == false)
         {
             _certificateMessages.Add(s: s, r: r);
-            // _commitMessages.Add(s: s);
             if (_node.IsByzantine != true)
             {
                 Console.WriteLine($"{this} v={v}| Broadcast Commit: s={s}, ni={ni}");
@@ -179,7 +172,8 @@ sealed class View : IDisposable
         }
     }
 
-    private int _vc;
+    private Timer? _viewTimer;
+
     public void OnViewChange(int v1, (int s, int r)[] Pb, int b)
     {
         _dispatcher.VerifyAccess();
@@ -222,7 +216,6 @@ sealed class View : IDisposable
         }
     }
 
-    private bool _isNew;
     public void OnNewView(int v, (int s, int r)[] V, (int s, int r)[] O, int p)
     {
         _dispatcher.VerifyAccess();
@@ -233,22 +226,13 @@ sealed class View : IDisposable
         if (_isNew == true)
             throw new InvalidOperationException();
 
-        Console.WriteLine($"{this} NewView: v1={v}, p={p}");
-        var isPrimary = IsPrimary;
-        if (V.Length > 0)
-        {
-            int wqer = 0;
-        }
+        Console.WriteLine($"{this} v={_v}| NewView: v1={v}, p={p}");
+        _viewTimer?.Dispose();
+        _viewTimer = null;
         _certificateMessages.AddRange(O);
         _prePrepareMessages.AddRange(V);
         _isNew = true;
         _s = _prePrepareMessages.Count > 0 ? _prePrepareMessages.Max(item => item.S) : 0;
-        // _certificateMessages.SetS(_s);
-        _s1 = _s;
-        if (_s > 0)
-        {
-            int qwer = 0;
-        }
     }
 
     public void Dispose()
@@ -260,33 +244,5 @@ sealed class View : IDisposable
         _isDisposed = true;
     }
 
-    // private async void SendRequestToPrimary(int v, int r, int c, int ni)
-    // {
-    //     var timeOut = TimeSpan.FromMilliseconds(Random.Shared.Next(200, 500));
-    //     var cancellationTokenSource = new CancellationTokenSource(timeOut);
-    //     try
-    //     {
-    //         var primaryEndPoint = _endPoints[_p];
-    //         await _node.SendRequestAsync(primaryEndPoint, _v, r, c, _ni, cancellationTokenSource.Token);
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         Console.WriteLine(e.Message);
-    //         await _dispatcher.InvokeAsync(() =>
-    //         {
-    //             var v = _v;
-    //             var Pb = _certificateMessages.Collect();
-    //             var b = _ni;
-    //             Console.WriteLine($"{this} Broadcast ViewChange");
-    //             _broadcaster.SendAll(service => service.ViewChange(v + 1, Pb, b));
-    //         });
-    //     }
-    // }
-
     private bool IsNotMe(EndPoint endPoint) => endPoint != _node.EndPoint;
-
-    private bool IsPrimaryNode(int p)
-    {
-        return _v % _endPoints.Length == p;
-    }
 }

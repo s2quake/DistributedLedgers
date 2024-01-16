@@ -13,12 +13,12 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
     private readonly HashSet<int> _requestSet = [];
     private readonly List<int?> _commitList = [];
     private readonly HashSet<int> _replySet = [];
+    private readonly Broadcaster _broadcaster;
     private int _maxS;
     private int _v = -1;
     private bool _isEnd;
     private int _f;
     private EndPoint[] _endPoints = [];
-    private readonly Broadcaster _broadcaster;
     private int _s;
 
     public Node()
@@ -36,10 +36,6 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
             }
             catch
             {
-                // foreach (var item in _replyList)
-                // {
-                //     Console.WriteLine($"{item}");
-                // }
                 throw;
             }
         }
@@ -58,44 +54,34 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         if (_v == -1)
             throw new InvalidOperationException("Node is not initialized.");
 
-        while (cancellationToken.IsCancellationRequested != true)
+        while (cancellationToken.IsCancellationRequested != true && _isEnd != true)
         {
             await Task.Delay(1, cancellationToken);
-            lock (_lockObject)
-            {
-                if (_isEnd == true)
-                    break;
-            }
         }
         var view = _viewByIndex[_v];
         Console.WriteLine($"{view} v={view.Index}| " + TerminalStringBuilder.GetString($"Completed.", TerminalColorType.BrightMagenta));
     }
 
-    public async void Request(int r, int c)
+    public void Request(int r, int c)
     {
         if (_v == -1)
             throw new InvalidOperationException("Node is not initialized.");
+
         var contains = false;
         lock (_lockObject)
         {
             if (_clientByRequest.ContainsKey(r) == true && _clientByRequest[r] == c)
-                throw new ArgumentException("invalid client", nameof(c));
+                throw new ArgumentException("Invalid client", nameof(c));
             if (_clientByRequest.ContainsKey(r) == true)
                 return;
             _clientByRequest.Add(r, c);
             _requestSet.Add(r);
             contains = _commitList.Contains(r);
-        }
 
-        if (GetView(_v) is { } view)
-        {
-            await view.Dispatcher.InvokeAsync(() =>
+            if (contains != true && GetView(_v) is { } view)
             {
-                if (contains != true)
-                {
-                    view.OnRequest(r, c);
-                }
-            });
+                view.Dispatcher.InvokeAsync(() => view.OnRequest(r, c));
+            }
         }
     }
 
@@ -123,10 +109,6 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
             var rr = new List<int>();
             while (_s < _commitList.Count && _commitList[_s] is { } r1)
             {
-                if (_isEnd == true)
-                {
-                    int weqr = 0;
-                }
                 var c1 = _clientByRequest[r1];
                 Console.WriteLine($"{view} v={view.Index}| " + TerminalStringBuilder.GetString($"Execute: s={_s}, c={c1}, r={r1}", TerminalColorType.Yellow));
                 _replySet.Add(r1);
@@ -163,6 +145,19 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
             {
                 _viewByIndex.Add(v, new(v, _endPoints, _f, this, _broadcaster));
             }
+            return _viewByIndex[v];
+        }
+    }
+
+    private View ChangeView(int v)
+    {
+        lock (_lockObject)
+        {
+            if (_viewByIndex.ContainsKey(v) == false)
+            {
+                _viewByIndex.Add(v, new(v, _endPoints, _f, this, _broadcaster));
+            }
+            _v = v;
             return _viewByIndex[v];
         }
     }
@@ -243,10 +238,9 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
 
     async void INodeService.NewView(int v1, (int s, int r)[] V, (int s, int r)[] O, int p)
     {
-        if (GetView(v1) is { } view)
+        if (ChangeView(v1) is { } view)
         {
             var items = NewMethod();
-            _v = v1;
             await view.Dispatcher.InvokeAsync(() =>
             {
                 view.OnNewView(v1, V, O, p);

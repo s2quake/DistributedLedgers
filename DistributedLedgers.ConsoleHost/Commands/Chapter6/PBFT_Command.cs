@@ -22,22 +22,29 @@ sealed partial class PBFT_Command : CommandAsyncBase
     [CommandProperty("request", 'r', InitValue = 2)]
     public int RequestCount { get; set; }
 
+    [CommandProperty("client", 'c', InitValue = 1)]
+    public int ClientCount { get; set; }
+
     protected override async Task OnExecuteAsync(CancellationToken cancellationToken, IProgress<ProgressInfo> progress)
     {
-        var n = NodeCount;
-        var r = RequestCount;
-        var f = ByzantineUtility.GetByzantineCount(n, (n, f) => n == 3 * f + 1);
-        var endPoints = PortUtility.GetEndPoints(n);
-        await using var nodes = await PBFT.Node.CreateManyAsync(endPoints, f, cancellationToken);
+        var nc = NodeCount;
+        var cc = ClientCount;
+        var rc = RequestCount;
+        var fc = ByzantineUtility.GetByzantineCount(nc, (n, f) => n == 3 * f + 1);
+        var endPoints = PortUtility.GetEndPoints(nc);
+        await using var nodes = await PBFT.Node.CreateManyAsync(endPoints, fc, cancellationToken);
         await Out.WriteLineAsync("============ agreement ============");
-        Parallel.ForEach(nodes, item => item.Initialize(endPoints, f, r));
-        var requestTasks = Enumerable.Range(0, r).Select(c => Task.Run(async () =>
+        Parallel.ForEach(nodes, item => item.Initialize(endPoints, fc, rc * cc));
+        var requestTasks = Enumerable.Range(0, cc).Select(c => Task.Run(async () =>
         {
-            var r = Random.Shared.Next();
-            foreach (var item in nodes)
+            for (var i = 0; i < rc; i++)
             {
-                await Task.Delay(Random.Shared.Next(10, 100), cancellationToken);
-                item.Request(r: r, c: c);
+                var r = Random.Shared.Next();
+                foreach (var item in nodes)
+                {
+                    await Task.Delay(Random.Shared.Next(10, 100), cancellationToken);
+                    item.Request(r: r, c: c);
+                }
             }
         }, cancellationToken)).ToArray();
         await Task.WhenAll(nodes.OrderBy(item => item.GetHashCode()).Select(item => item.RunAsync(cancellationToken)));
@@ -58,6 +65,5 @@ sealed partial class PBFT_Command : CommandAsyncBase
         }
         tsb.AppendLine("==================================");
         await Out.WriteAsync(tsb.ToString());
-        // }
     }
 }
