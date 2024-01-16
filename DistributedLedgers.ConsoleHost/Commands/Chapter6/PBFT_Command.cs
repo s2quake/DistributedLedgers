@@ -1,6 +1,7 @@
 
 using System.ComponentModel;
 using System.ComponentModel.Composition;
+using DistributedLedgers.ConsoleHost.Common;
 using JSSoft.Commands;
 using JSSoft.Terminals;
 
@@ -15,25 +16,21 @@ sealed partial class PBFT_Command : CommandAsyncBase
     {
     }
 
-    [CommandPropertyRequired(DefaultValue = 4)]
+    [CommandProperty("node", 'n', InitValue = 4)]
     public int NodeCount { get; set; }
 
-    [CommandProperty("request", 'r', InitValue = 4)]
+    [CommandProperty("request", 'r', InitValue = 2)]
     public int RequestCount { get; set; }
 
     protected override async Task OnExecuteAsync(CancellationToken cancellationToken, IProgress<ProgressInfo> progress)
     {
-        // var r = RepeatCount;
-        // while (r-- > 0 && cancellationToken.IsCancellationRequested != true)
-        // {
         var n = NodeCount;
         var r = RequestCount;
-        // var f = ByzantineUtility.GetByzantineCount(n, (n, f) => n == 3 * f + 1);
-        var f = 1;
+        var f = ByzantineUtility.GetByzantineCount(n, (n, f) => n == 3 * f + 1);
         var endPoints = PortUtility.GetEndPoints(n);
         await using var nodes = await PBFT.Node.CreateManyAsync(endPoints, f, cancellationToken);
         await Out.WriteLineAsync("============ agreement ============");
-        Parallel.ForEach(nodes, item => item.Initialize(endPoints, f));
+        Parallel.ForEach(nodes, item => item.Initialize(endPoints, f, r));
         var requestTasks = Enumerable.Range(0, r).Select(c => Task.Run(async () =>
         {
             var r = Random.Shared.Next();

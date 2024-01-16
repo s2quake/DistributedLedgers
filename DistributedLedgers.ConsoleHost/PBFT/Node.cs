@@ -9,9 +9,11 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
 {
     private readonly object _lockObject = new();
     private readonly Dictionary<int, View> _viewByIndex = [];
-    private readonly Dictionary<int, int> _clientByRequest2 = [];
     private readonly Dictionary<int, int> _clientByRequest = [];
-    private readonly List<(int r, int c)?> _replyList = [];
+    private readonly HashSet<int> _requestSet = [];
+    private readonly List<int?> _commitList = [];
+    private readonly HashSet<int> _replySet = [];
+    private int _maxS;
     private int _v = -1;
     private bool _isEnd;
     private int _f;
@@ -30,24 +32,25 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         {
             try
             {
-                return [.. _replyList.Select(item => (item!.Value.r, item!.Value.c))];
+                return [.. _commitList.Select(item => (item.Value, _clientByRequest[item.Value]))];
             }
             catch
             {
-                foreach (var item in _replyList)
-                {
-                    Console.WriteLine($"{item}");
-                }
+                // foreach (var item in _replyList)
+                // {
+                //     Console.WriteLine($"{item}");
+                // }
                 throw;
             }
         }
     }
 
-    public void Initialize(EndPoint[] endPoints, int f)
+    public void Initialize(EndPoint[] endPoints, int f, int maxS)
     {
         _endPoints = endPoints;
         _f = f;
         _v = 0;
+        _maxS = maxS;
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -55,25 +58,43 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         if (_v == -1)
             throw new InvalidOperationException("Node is not initialized.");
 
-        while (cancellationToken.IsCancellationRequested != true && _isEnd != true)
+        while (cancellationToken.IsCancellationRequested != true)
         {
             await Task.Delay(1, cancellationToken);
+            lock (_lockObject)
+            {
+                if (_isEnd == true)
+                    break;
+            }
         }
+        var view = _viewByIndex[_v];
+        Console.WriteLine($"{view} v={view.Index}| " + TerminalStringBuilder.GetString($"Completed.", TerminalColorType.BrightMagenta));
     }
 
     public async void Request(int r, int c)
     {
         if (_v == -1)
             throw new InvalidOperationException("Node is not initialized.");
+        var contains = false;
+        lock (_lockObject)
+        {
+            if (_clientByRequest.ContainsKey(r) == true && _clientByRequest[r] == c)
+                throw new ArgumentException("invalid client", nameof(c));
+            if (_clientByRequest.ContainsKey(r) == true)
+                return;
+            _clientByRequest.Add(r, c);
+            _requestSet.Add(r);
+            contains = _commitList.Contains(r);
+        }
 
         if (GetView(_v) is { } view)
         {
             await view.Dispatcher.InvokeAsync(() =>
             {
-                _clientByRequest2.Add(r, c);
-                _clientByRequest.Add(r, c);
-                _replyList.Add(null);
-                view.RequestFromClient(r, c);
+                if (contains != true)
+                {
+                    view.OnRequest(r, c);
+                }
             });
         }
     }
@@ -83,29 +104,41 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
         return SendAsync(endPoint, (service, cancellationToken) => service.RequestAsync(v, r, c, ni, cancellationToken), cancellationToken);
     }
 
-    internal int[] Reply(View view, int s, int r)
+    internal int[] Commit(View view, int s, int r)
     {
-        if (_clientByRequest.ContainsKey(r) == true)
+        if (view.Index != _v)
+            return [];
+
+        lock (_lockObject)
         {
-            while (s > _replyList.Count)
+            while (s >= _commitList.Count)
             {
-                _replyList.Add(null);
+                _commitList.Add(null);
             }
-            _replyList[s] = (r, _clientByRequest[r]);
-            _clientByRequest.Remove(r);
+            if (_requestSet.Contains(r) == true)
+            {
+                _commitList[s] = r;
+                _requestSet.Remove(r);
+            }
+            var rr = new List<int>();
+            while (_s < _commitList.Count && _commitList[_s] is { } r1)
+            {
+                if (_isEnd == true)
+                {
+                    int weqr = 0;
+                }
+                var c1 = _clientByRequest[r1];
+                Console.WriteLine($"{view} v={view.Index}| " + TerminalStringBuilder.GetString($"Execute: s={_s}, c={c1}, r={r1}", TerminalColorType.Yellow));
+                _replySet.Add(r1);
+                rr.Add(r1);
+                _s++;
+            }
+            if (_s == _maxS && _isEnd != true)
+            {
+                _isEnd = _clientByRequest.Count == _replySet.Count && _replySet.Count == _commitList.Where(item => item is not null).Count() && _commitList.Count == _commitList.Where(item => item is not null).Count();
+            }
+            return rr.ToArray();
         }
-        var rr = new List<int>();
-        while (_s < _replyList.Count && _replyList[_s] is { } item)
-        {
-            Console.WriteLine($"{view}" + TerminalStringBuilder.GetString($"Reply: v={view.Index}, s={_s}, c={item.c}, r={item.r}", TerminalColorType.Yellow));
-            rr.Add(item.r);
-            _s++;
-        }
-        if (_s > s)
-        {
-            _isEnd = _clientByRequest2.Count == _replyList.Count && _replyList.Any(item => item is null) != true;
-        }
-        return rr.ToArray();
     }
 
     protected override Task<Server> CreateServerAsync(EndPoint endPoint, CancellationToken cancellationToken)
@@ -162,74 +195,74 @@ sealed class Node : NodeBase<Node, INodeService>, INodeService
 
     async void INodeService.PrePrepare(int v, int s, int r, int p)
     {
-        // Console.WriteLine($"{this}: INodeService.PrePrepare 1");
         if (GetView(v) is { } view)
         {
-            await view.Dispatcher.InvokeAsync(() => view.PrePrepare(v, s, r, p));
+            await view.Dispatcher.InvokeAsync(() => view.OnPrePrepare(v, s, r, p));
         }
         else
         {
             throw new NotImplementedException();
         }
-        // Console.WriteLine($"{this}: INodeService.PrePrepare 2");
     }
 
     async void INodeService.Prepare(int v, int s, int r, int b)
     {
-        // Console.WriteLine($"{this}: INodeService.Prepare 1");
         if (GetView(v) is { } view)
         {
-            await view.Dispatcher.InvokeAsync(() => view.Prepare(v, s, r, b));
+            await view.Dispatcher.InvokeAsync(() => view.OnPrepare(v, s, r, b));
         }
         else
         {
             throw new NotImplementedException();
         }
-        // Console.WriteLine($"{this}: INodeService.Prepare 2");
     }
 
     async void INodeService.Commit(int v, int s, int ni)
     {
-        // Console.WriteLine($"{this}: INodeService.Commit 1");
         if (GetView(v) is { } view)
         {
-            await view.Dispatcher.InvokeAsync(() => view.Commit(v, s, ni));
+            await view.Dispatcher.InvokeAsync(() => view.OnCommit(v, s, ni));
         }
         else
         {
             throw new NotImplementedException();
         }
-        // Console.WriteLine($"{this}: INodeService.Commit 2");
     }
 
     async void INodeService.ViewChange(int v1, (int s, int r)[] Pb, int b)
     {
-        // Console.WriteLine($"{this}: INodeService.ViewChange 1");
         if (GetView(v1 - 1) is { } view)
         {
-            await view.Dispatcher.InvokeAsync(() => view.ViewChange(v1, Pb, b));
+            await view.Dispatcher.InvokeAsync(() => view.OnViewChange(v1, Pb, b));
         }
         else
         {
             throw new NotImplementedException();
         }
-        // Console.WriteLine($"{this}: INodeService.ViewChange 2");
     }
 
     async void INodeService.NewView(int v1, (int s, int r)[] V, (int s, int r)[] O, int p)
     {
         if (GetView(v1) is { } view)
         {
-            var items = _clientByRequest.Select(item => (r: item.Key, c: item.Value)).ToArray();
+            var items = NewMethod();
             _v = v1;
             await view.Dispatcher.InvokeAsync(() =>
             {
-                view.NewView(v1, V, O, p);
+                view.OnNewView(v1, V, O, p);
                 foreach (var (r, c) in items)
                 {
-                    view.RequestFromClient(r: r, c: c);
+                    view.OnRequest(r: r, c: c);
                 }
             });
+        }
+
+        (int r, int c)[] NewMethod()
+        {
+            lock (_lockObject)
+            {
+                return _requestSet.Select(item => (r: item, c: _clientByRequest[item])).ToArray();
+            }
         }
     }
 
